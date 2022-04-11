@@ -1,5 +1,6 @@
 import Graph as G
-from Greedy import greedy
+import math as m
+import random
 
 def generateTestData(startGraph, numGraphs):
     #start with the initial graph
@@ -81,15 +82,46 @@ def runTests(testData, mrsFunction, draw=False):
 def runTestsFromFile(testFile, mrsFunction, draw=False):
     return runTests(readTestData(testFile), mrsFunction, draw=draw)
 
-#------------------------------------
-#test with a cycle as the start graph, can't make n too big or drawing doesn't work
-n = 9
-startGraph = G.Graph()
+sizes = [10, 50, 100, 200, 500, 1000]
+def generateStartingGraphs():
+    graphs = []
 
-for i in range(n):
-    startGraph.newVertex()
+    #walk through all edge densities
+    for edgeDensity in range(10, 90, 10):
+        edgeDensityFraction = edgeDensity / 100
 
-for i in range(n):
-    startGraph.addEdge(startGraph.vertices[i], startGraph.vertices[(i+1) % n], i%3)
+        #walk through all sizes
+        for size in sizes:
+            #figure out what the colour parameters will be
+            maxColours = int(m.sqrt(size))
+            if(maxColours < 5):
+                maxColours = 6
+            colourStep = m.ceil((maxColours - 5) / 5)
+            if colourStep < 1:
+                colourStep = 1
 
-print(runTests(generateTestData(startGraph, 4), greedy, draw=True))
+            #walk through the numbers of colours
+            for numColours in range(5, maxColours, colourStep):
+                #generate the vertices of the graph
+                newGraph = G.Graph()
+                for i in range(size):
+                    newGraph.newVertex()
+
+                #generate the edges
+                for u in newGraph.vertices:
+                    for v in newGraph.vertices:
+                        edgeProbability = random.random()
+                        if edgeProbability < edgeDensityFraction:
+                            newGraph.addEdge(u, v, 0)
+
+                #generate the colours
+                toBeColoured = newGraph.edges.copy()
+                colourNum = 0
+                while len(toBeColoured) > 0:
+                    edgeIndex = random.randint(0, len(toBeColoured)-1)
+                    toBeColoured[edgeIndex].colour = colourNum
+                    colourNum = (colourNum + 1) % (numColours+1)
+                    toBeColoured.remove(toBeColoured[edgeIndex])
+
+                graphs.append(newGraph)
+    return graphs
