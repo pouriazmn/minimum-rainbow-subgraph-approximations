@@ -61,21 +61,25 @@ def readTestData(fileName):
 
     return graphs
 
-def runTests(testData, mrsFunction):
+def runTests(testData, mrsFunction, draw=False):
     results = []
 
     for graph in testData:
-        print("drawing original graph")
-        graph.draw()
+        if(draw):
+            print("drawing original graph")
+            graph.draw()
         resultGraph = mrsFunction(graph)
-        print("drawing rainbow subgraph")
-        resultGraph.draw()
+
+        if(draw):
+            print("drawing rainbow subgraph")
+            resultGraph.draw()
+        
         results.append(resultGraph.n())
 
     return results
 
-def runTestsFromFile(testFile, mrsFunction):
-    return runTests(readTestData(testFile), mrsFunction)
+def runTestsFromFile(testFile, mrsFunction, draw=False):
+    return runTests(readTestData(testFile), mrsFunction, draw=draw)
 
 #------------------------------------
 #test with a cycle as the start graph, can't make n too big or drawing doesn't work
@@ -88,4 +92,4 @@ for i in range(n):
 for i in range(n):
     startGraph.addEdge(startGraph.vertices[i], startGraph.vertices[(i+1) % n], i%3)
 
-print(runTests(generateTestData(startGraph, 4), greedy))
+print(runTests(generateTestData(startGraph, 4), greedy, draw=True))
