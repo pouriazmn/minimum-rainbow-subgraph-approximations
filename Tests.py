@@ -94,7 +94,7 @@ def runTests(testData, mrsFunction, draw=False):
 def runTestsFromFile(testFile, mrsFunction, draw=False):
     return runTests(readTestData(testFile), mrsFunction, draw=draw)
 
-sizes = [10]
+sizes = [10, 50, 100, 200, 500, 1000]
 def generateStartingGraphs():
     graphs = []
 
@@ -137,3 +137,11 @@ def generateStartingGraphs():
 
                 graphs.append([newGraph, size, edgeDensity, numColours])
     return graphs
+
+startGraphs = generateStartingGraphs()
+print("starting graphs done")
+
+for startGraph in startGraphs:
+    graphs = generateTestData(startGraph[0], 100)
+    testData = [graphs, startGraph[1], startGraph[2], startGraph[3]]
+    writeTestData(testData, "TEST_" + str(startGraph[1]) + "_" + str(startGraph[2]) + "_" + str(startGraph[3]) + ".txt")
