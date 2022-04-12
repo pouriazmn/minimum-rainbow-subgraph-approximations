@@ -125,7 +125,19 @@ def rewire(G):
                 w = e.v1
                 otherEdge = e
 
-    assert(u2 != None)
+    if u2 is None:
+        otherEdge = edge
+        while otherEdge == edge:
+            otherEdgeNum = random.randint(0, m-1)
+            otherEdge = newGraph.edges[otherEdgeNum]
+
+        if otherEdge.v1 == u1:
+            u2 = otherEdge.v2
+            w = otherEdge.v1
+        else:
+            u2 = otherEdge.v1
+            w = otherEdge.v2
+    
     colour2 = otherEdge.colour
 
     newGraph.removeEdge(edge)
