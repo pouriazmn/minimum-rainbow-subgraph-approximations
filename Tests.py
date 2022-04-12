@@ -131,17 +131,50 @@ def generateStartingGraphs():
                 colourNum = 0
                 while len(toBeColoured) > 0:
                     edgeIndex = random.randint(0, len(toBeColoured)-1)
-                    toBeColoured[edgeIndex].colour = colourNum
-                    colourNum = (colourNum + 1) % (numColours+1)
-                    toBeColoured.remove(toBeColoured[edgeIndex])
+                    edge = toBeColoured[edgeIndex]
+                    edge.colour = colourNum
+                    toBeColoured.remove(edge)
+                    colourNum = (colourNum + 1) % numColours
 
+                #ensure that the colouring is proper
+                for v in newGraph.vertices:
+                    #categorize all the edges incident to v by which neighbour they connect v to
+                    neighbours = {}
+                    for edge in v.incidentEdges:
+                        if edge.v1 == v:
+                            u = edge.v2
+                        else:
+                            u = edge.v1
+
+                        if not u in neighbours.keys():
+                            neighbours[u] = [edge]
+                        else:
+                            neighbours[u].append(edge)
+
+                    #see if there are two edges of the same colour between two v and any of its neighbours
+                    for u in neighbours.keys():
+                        edges = neighbours[u]
+                        colourClasses = {}
+                        for edge in edges:
+                            if not edge.colour in colourClasses.keys():
+                                colourClasses[edge.colour] = edge
+                            #if this colour is a repeat, find an available colour to change this colour to
+                            else:
+                                for i in range(colourNum+1):
+                                    if not i in colourClasses.keys():
+                                        edge.colour = i
+                                        colourClasses[i] = edge
+
+                                assert(edge.colour in colourClasses.keys())
+
+                print("start graph with size=" + str(size) + ", density = " + str(edgeDensity) + ", and max colour = " + str(numColours) + " generated.")
                 graphs.append([newGraph, size, edgeDensity, numColours])
     return graphs
 
 startGraphs = generateStartingGraphs()
-print("starting graphs done")
 
 for startGraph in startGraphs:
-    graphs = generateTestData(startGraph[0], 100)
+    graphs = generateTestData(startGraph[0], 10)
     testData = [graphs, startGraph[1], startGraph[2], startGraph[3]]
     writeTestData(testData, "TEST_" + str(startGraph[1]) + "_" + str(startGraph[2]) + "_" + str(startGraph[3]) + ".txt")
+    print("data set with size=" + str(startGraph[1]) + ", density=" + str(startGraph[2]) + ", and max colour=" + str(startGraph[3]) + " generated.")

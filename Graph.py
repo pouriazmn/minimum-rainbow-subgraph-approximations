@@ -104,11 +104,12 @@ def rewire(G):
     newGraph = G.copy()
     m = newGraph.m()
 
+    #find the first edge
     edgeNum = random.randint(0,m-1)
-
     edge = newGraph.edges[edgeNum]
 
-    vertexNum = random.randint(0,2)
+    #find the first two vertices
+    vertexNum = random.randint(0,1)
     if vertexNum == 0:
         u1 = edge.v1
         v = edge.v2
@@ -116,12 +117,12 @@ def rewire(G):
         u1 = edge.v2
         v = edge.v1
 
-    colour1 = edge.colour
     vertexDegree = u1.degree()
     u2 = None
 
+    #find the other edge and the associated vertices
     for e in newGraph.edges:
-        if e != edge:
+        if e.v1 != edge.v1 and e.v2 != edge.v2 and e.v2 != edge.v1 and e.v1 != edge.v2:
             if e.v1.degree() == vertexDegree:
                 u2 = e.v1
                 w = e.v2
@@ -131,26 +132,37 @@ def rewire(G):
                 w = e.v1
                 otherEdge = e
 
+        if not u2 is None:
+            break
+
     if u2 is None:
         otherEdge = edge
+        otherEdgeNum = 0
         while otherEdge == edge:
-            otherEdgeNum = random.randint(0, m-1)
             otherEdge = newGraph.edges[otherEdgeNum]
+            otherEdgeNum = (otherEdgeNum + 1) % m
+        u2 = otherEdge.v1
+        w = otherEdge.v2
 
-        if otherEdge.v1 == u1:
-            u2 = otherEdge.v2
-            w = otherEdge.v1
-        else:
-            u2 = otherEdge.v1
-            w = otherEdge.v2
-    
-    colour2 = otherEdge.colour
+    rewireAllowed = False
+    while not rewireAllowed:
+        #ensure that the rewire will not make the graph not proper
+        rewireAllowed = True
+        for incidentEdge in u1.incidentEdges:
+            if incidentEdge != edge and (incidentEdge.v1 == w or incidentEdge.v2 == w) and incidentEdge.colour == edge.colour:
+                edge.colour += 1
+                rewireAllowed = False
+
+        for incidentEdge in u2.incidentEdges:
+            if incidentEdge != otherEdge and (incidentEdge.v2 == v or incidentEdge.v1 == v) and incidentEdge.colour == otherEdge.colour:
+                incidentEdge.colour += 1
+                rewireAllowed = False
 
     newGraph.removeEdge(edge)
     newGraph.removeEdge(otherEdge)
 
-    newGraph.addEdge(u1, w, colour1)
-    newGraph.addEdge(u2, v, colour2)
+    newGraph.addEdge(u1, w, edge.colour)
+    newGraph.addEdge(u2, v, otherEdge.colour)
 
     return newGraph
 
