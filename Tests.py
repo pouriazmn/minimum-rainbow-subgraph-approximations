@@ -13,11 +13,14 @@ def generateTestData(startGraph, numGraphs):
     return graphs
 
 def writeTestData(testData, fileName):
-    testDataString = ""
+    graphs = testData[0]
+    size = testData[1]
+    density = testData[2]
+    maxColour = testData[3]
 
+    testDataString = str(size) + "," + str(density) + "," + str(maxColour) + "#\n"
     #create a string for each test graph
-    for graph in testData:
-        testDataString += str(graph.n()) + "\n" #num verices first
+    for graph in graphs:
 
         #write each edge
         for edge in graph.edges:
@@ -39,16 +42,21 @@ def readTestData(fileName):
 
     #split the string into the strings for each test
     testDataStrings = testDataString.split("#")
+    params = testDataStrings[0].split(",")
+    size = int(params[0])
+    density = int(params[1])
+    maxColour = int(params[2])
 
     #parse the string for each test into a graph object
-    for testString in testDataStrings:
+    for i in range(1, len(testDataStrings)):
+        testString = testDataStrings[i]
+
         if len(testString) > 0:
             graphData = testString.split("\n")
 
-            #create the vertices
-            n = int(graphData[0])
             newGraph = G.Graph()
-            for i in range(n):
+            #create the vertices
+            for i in range(size):
                 newGraph.newVertex()
 
             #create the edges
@@ -60,12 +68,16 @@ def readTestData(fileName):
 
             graphs.append(newGraph)
 
-    return graphs
+    return [graphs, size, density, maxColour]
 
 def runTests(testData, mrsFunction, draw=False):
     results = []
 
-    for graph in testData:
+    graphs = testData[0]
+    size = testData[1]
+    density = testData[2]
+    maxColour = testData[3]
+    for graph in graphs:
         if(draw):
             print("drawing original graph")
             graph.draw()
@@ -77,21 +89,21 @@ def runTests(testData, mrsFunction, draw=False):
         
         results.append(resultGraph.n())
 
-    return results
+    return [results, size, density, maxColour]
 
 def runTestsFromFile(testFile, mrsFunction, draw=False):
     return runTests(readTestData(testFile), mrsFunction, draw=draw)
 
-sizes = [10, 50, 100, 200, 500, 1000]
+sizes = [10]
 def generateStartingGraphs():
     graphs = []
 
-    #walk through all edge densities
-    for edgeDensity in range(10, 90, 10):
-        edgeDensityFraction = edgeDensity / 100
-
-        #walk through all sizes
-        for size in sizes:
+    #walk through all sizes
+    for size in sizes:
+        #walk through all edge densities
+        for edgeDensity in range(10, 90, 10):
+            edgeDensityFraction = edgeDensity / 100
+        
             #figure out what the colour parameters will be
             maxColours = int(m.sqrt(size))
             if(maxColours < 5):
@@ -123,5 +135,5 @@ def generateStartingGraphs():
                     colourNum = (colourNum + 1) % (numColours+1)
                     toBeColoured.remove(toBeColoured[edgeIndex])
 
-                graphs.append(newGraph)
+                graphs.append([newGraph, size, edgeDensity, numColours])
     return graphs
