@@ -86,13 +86,19 @@ class Graph:
 
     def copy(self):
         newGraph = Graph()
+        vertices_map = {}
         for vertex in self.vertices:
-            newGraph.addVertex(vertex)
+            v = Vertex()
+            vertices_map[vertex] = v
+            newGraph.addVertex(v)
 
         for edge in self.edges:
-            newGraph.addEdge(edge.v1, edge.v2, edge.colour)
+            v1 = vertices_map[edge.v1]
+            v2 = vertices_map[edge.v2]
+            newGraph.addEdge(v1, v2, edge.colour)
 
         return newGraph
+
 
 def rewire(G):
     newGraph = G.copy()
