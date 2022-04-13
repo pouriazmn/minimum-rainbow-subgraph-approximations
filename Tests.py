@@ -1,6 +1,7 @@
 import Graph as G
 import math as m
 import random
+from Koch2011 import Koch2011
 
 def generateTestData(startGraph, numGraphs):
     #start with the initial graph
@@ -70,7 +71,7 @@ def readTestData(fileName):
 
     return [graphs, size, density, maxColour]
 
-def runTests(testData, mrsFunction, draw=False):
+def runTest(testData, mrsFunction, draw=False):
     results = []
 
     graphs = testData[0]
@@ -91,8 +92,8 @@ def runTests(testData, mrsFunction, draw=False):
 
     return [results, size, density, maxColour]
 
-def runTestsFromFile(testFile, mrsFunction, draw=False):
-    return runTests(readTestData(testFile), mrsFunction, draw=draw)
+def runTestFromFile(testFile, mrsFunction, draw=False):
+    return runTest(readTestData(testFile), mrsFunction, draw=draw)
 
 sizes = [10, 50, 100, 200, 500, 1000]
 def generateStartingGraphs():
@@ -170,3 +171,36 @@ def generateStartingGraphs():
                 print("start graph with size=" + str(size) + ", density = " + str(edgeDensity) + ", and max colour = " + str(numColours) + " generated.")
                 graphs.append([newGraph, size, edgeDensity, numColours])
     return graphs
+
+#will run all generated tests on graphs of size sizeMin to sizeMax (inclusive)
+#mrsFunctions should be a list of functions that accept exactly one parameter (the graph) and returns exactly a rainbow subgraph
+def runTests(mrsFunctions, sizeMin=10, sizeMax=1000):
+    for size in sizes:
+        if size >= sizeMin and size <= sizeMax:
+            for edgeDensity in range(10,90,10):
+                #figure out what the colour parameters will be
+                maxColours = int(m.sqrt(size))
+                if(maxColours < 5):
+                    maxColours = 6
+                    colourStep = m.ceil((maxColours - 5) / 5)
+                if colourStep < 1:
+                    colourStep = 1
+
+                #walk through the numbers of colours
+                for numColours in range(5, maxColours, colourStep):
+                    fileName = "TEST_" + str(size) + "_" + str(edgeDensity) + "_" + str(numColours) + ".txt"
+
+                    for mrsFunction in mrsFunctions:
+                        results = runTestFromFile(fileName, mrsFunction)
+                        resultString = mrsFunction.__name__
+                        resultString += "," + str(results[1])
+                        resultString += "," + str(results[2])
+                        resultString += "," + str(results[3])
+                        for val in results[0]:
+                            resultString += "," + str(val)
+                        resultString += "\n"
+                        resultFile = open("results.csv", "a")
+                        resultFile.write(resultString)
+
+if __name__ == "__main__":
+    runTests([Koch2011], sizeMax=50)
