@@ -17,7 +17,7 @@ def computeValues(inputGraph, coloursNeeded):
                 incidentColours.append(edge.colour)
     return value, newEdges
 
-def greedy(inputGraph):
+def Koch2011(inputGraph):
     n = inputGraph.n()
     H = G.Graph()
     coloursNeeded = []
