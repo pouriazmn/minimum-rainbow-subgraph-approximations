@@ -170,11 +170,3 @@ def generateStartingGraphs():
                 print("start graph with size=" + str(size) + ", density = " + str(edgeDensity) + ", and max colour = " + str(numColours) + " generated.")
                 graphs.append([newGraph, size, edgeDensity, numColours])
     return graphs
-
-startGraphs = generateStartingGraphs()
-
-for startGraph in startGraphs:
-    graphs = generateTestData(startGraph[0], 10)
-    testData = [graphs, startGraph[1], startGraph[2], startGraph[3]]
-    writeTestData(testData, "TEST_" + str(startGraph[1]) + "_" + str(startGraph[2]) + "_" + str(startGraph[3]) + ".txt")
-    print("data set with size=" + str(startGraph[1]) + ", density=" + str(startGraph[2]) + ", and max colour=" + str(startGraph[3]) + " generated.")
