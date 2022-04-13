@@ -201,6 +201,7 @@ def runTests(mrsFunctions, sizeMin=10, sizeMax=1000):
                         resultString += "\n"
                         resultFile = open("results.csv", "a")
                         resultFile.write(resultString)
+                        resultFile.close()
 
 if __name__ == "__main__":
     runTests([Koch2011], sizeMax=50)
