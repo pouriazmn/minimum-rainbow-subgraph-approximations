@@ -172,7 +172,7 @@ def generateStartingGraphs():
                 graphs.append([newGraph, size, edgeDensity, numColours])
     return graphs
 
-#will run all generated tests on graphs of size sizeMin to sizeMax (inclusive)
+#will run all generated tests on graphs of size sizeMin to sizeMax (inclusive) and write the results to the results csv
 #mrsFunctions should be a list of functions that accept exactly one parameter (the graph) and returns exactly a rainbow subgraph
 def runTests(mrsFunctions, sizeMin=10, sizeMax=1000):
     for size in sizes:
