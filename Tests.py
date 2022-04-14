@@ -204,4 +204,4 @@ def runTests(mrsFunctions, sizeMin=10, sizeMax=1000):
                         resultFile.close()
 
 if __name__ == "__main__":
-    runTests([Koch2011], sizeMax=50)
+    runTests([Koch2011], sizeMax=100)
