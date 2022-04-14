@@ -56,7 +56,6 @@ class Graph:
         if colour > self.maxColour:
             self.maxColour = colour
 
-
     def removeEdge(self, edge):
         self.edges.remove(edge)
         edge.v1.incidentEdges.remove(edge)
