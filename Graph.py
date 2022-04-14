@@ -84,6 +84,21 @@ class Graph:
         nx.draw(selfNX, edge_color=selfcolors)
         plt.show()
 
+    @classmethod
+    def from_adjacency_matrix(cls, adjacency_matrix):
+        graph = cls()
+        n = len(adjacency_matrix)
+        vertices = []
+        for i in range(n):
+            v = Vertex
+            vertices.append(v)
+            graph.addVertex(v)
+        for i in range(n):
+            for j in range(n):
+                if adjacency_matrix[i][j] != 0:
+                    graph.addEdge(vertices[i], vertices[j], adjacency_matrix[i][j])
+        return graph
+
     def copy(self):
         newGraph = Graph(maxColour=self.maxColour)
         vertices_map = {}
