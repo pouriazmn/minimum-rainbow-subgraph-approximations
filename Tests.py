@@ -95,8 +95,7 @@ def runTest(testData, mrsFunction, draw=False):
 def runTestFromFile(testFile, mrsFunction, draw=False):
     return runTest(readTestData(testFile), mrsFunction, draw=draw)
 
-#sizes = [10, 50, 100, 200, 500, 1000]
-sizes = [10,50]
+sizes = [10, 50, 100, 200, 500, 1000]
 def generateStartingGraphs():
     graphs = []
 
@@ -177,7 +176,7 @@ def generateTests():
     startGraphs = generateStartingGraphs()
     for startGraph in startGraphs:
         graphs = generateTestData(startGraph[0], 10)
-        fileName = "COLOUR_TEST_" + str(startGraph[1]) + "_" + str(startGraph[2]) + "_" + str(startGraph[3]) + ".txt"
+        fileName = "./newTests/TEST_" + str(startGraph[1]) + "_" + str(startGraph[2]) + "_" + str(startGraph[3]) + ".txt"
         writeTestData([graphs, startGraph[1], startGraph[2], startGraph[3]], fileName)
         print("Test data with size = " + str(startGraph[1]) + ", density = " + str(startGraph[2]) + ", num colours = " + str(startGraph[3]) + " generated")
     pass
@@ -191,13 +190,13 @@ def runTests(mrsFunctions, sizeMin=10, sizeMax=1000):
                 #figure out what the colour parameters will be
                 maxColours = int(m.sqrt(size))
                 if(maxColours < 5):
-                    maxColours = 6
-                    colourStep = m.ceil((maxColours - 5) / 5)
+                    maxColours = 5
+                colourStep = m.ceil((maxColours - 5) / 5)
                 if colourStep < 1:
                     colourStep = 1
 
                 #walk through the numbers of colours
-                for numColours in range(5, maxColours, colourStep):
+                for numColours in range(5, maxColours + colourStep, colourStep):
                     fileName = "TEST_" + str(size) + "_" + str(edgeDensity) + "_" + str(numColours) + ".txt"
 
                     for mrsFunction in mrsFunctions:
@@ -214,4 +213,4 @@ def runTests(mrsFunctions, sizeMin=10, sizeMax=1000):
                         resultFile.close()
 
 if __name__ == "__main__":
-    generateTests()
+    runTests([Koch2011], sizeMax=100)
