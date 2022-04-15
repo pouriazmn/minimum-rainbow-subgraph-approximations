@@ -55,7 +55,7 @@ def readTestData(fileName):
         if len(testString) > 0:
             graphData = testString.split("\n")
 
-            newGraph = G.Graph()
+            newGraph = G.Graph(maxColour)
             #create the vertices
             for i in range(size):
                 newGraph.newVertex()
@@ -95,7 +95,8 @@ def runTest(testData, mrsFunction, draw=False):
 def runTestFromFile(testFile, mrsFunction, draw=False):
     return runTest(readTestData(testFile), mrsFunction, draw=draw)
 
-sizes = [10, 50, 100, 200, 500, 1000]
+#sizes = [10, 50, 100, 200, 500, 1000]
+sizes = [10,50]
 def generateStartingGraphs():
     graphs = []
 
@@ -108,15 +109,15 @@ def generateStartingGraphs():
             #figure out what the colour parameters will be
             maxColours = int(m.sqrt(size))
             if(maxColours < 5):
-                maxColours = 6
+                maxColours = 5
             colourStep = m.ceil((maxColours - 5) / 5)
             if colourStep < 1:
                 colourStep = 1
 
             #walk through the numbers of colours
-            for numColours in range(5, maxColours, colourStep):
+            for numColours in range(5, maxColours + colourStep, colourStep):
                 #generate the vertices of the graph
-                newGraph = G.Graph()
+                newGraph = G.Graph(maxColours)
                 for i in range(size):
                     newGraph.newVertex()
 
@@ -161,16 +162,25 @@ def generateStartingGraphs():
                                 colourClasses[edge.colour] = edge
                             #if this colour is a repeat, find an available colour to change this colour to
                             else:
-                                for i in range(colourNum+1):
+                                for i in range(numColours-1, -1, -1):
                                     if not i in colourClasses.keys():
                                         edge.colour = i
-                                        colourClasses[i] = edge
 
-                                assert(edge.colour in colourClasses.keys())
+                                assert(not edge.colour in colourClasses.keys())
+                                assert(edge.colour < numColours)
 
-                print("start graph with size=" + str(size) + ", density = " + str(edgeDensity) + ", and max colour = " + str(numColours) + " generated.")
+                print("start graph with size=" + str(size) + ", density = " + str(edgeDensity) + ", and num colours = " + str(numColours) + " generated.")
                 graphs.append([newGraph, size, edgeDensity, numColours])
     return graphs
+
+def generateTests():
+    startGraphs = generateStartingGraphs()
+    for startGraph in startGraphs:
+        graphs = generateTestData(startGraph[0], 10)
+        fileName = "COLOUR_TEST_" + str(startGraph[1]) + "_" + str(startGraph[2]) + "_" + str(startGraph[3]) + ".txt"
+        writeTestData([graphs, startGraph[1], startGraph[2], startGraph[3]], fileName)
+        print("Test data with size = " + str(startGraph[1]) + ", density = " + str(startGraph[2]) + ", num colours = " + str(startGraph[3]) + " generated")
+    pass
 
 #will run all generated tests on graphs of size sizeMin to sizeMax (inclusive) and write the results to the results csv
 #mrsFunctions should be a list of functions that accept exactly one parameter (the graph) and returns exactly a rainbow subgraph
@@ -204,4 +214,4 @@ def runTests(mrsFunctions, sizeMin=10, sizeMax=1000):
                         resultFile.close()
 
 if __name__ == "__main__":
-    runTests([Koch2011], sizeMax=100)
+    generateTests()

@@ -25,10 +25,10 @@ class Edge:
 
 class Graph:
     #create an empty graph
-    def __init__(self):
+    def __init__(self, maxColour):
         self.vertices = []
         self.edges = []
-        self.maxColour = -1
+        self.maxColour = maxColour
 
     #get the number of vertices in a graph
     def n(self):
@@ -48,6 +48,7 @@ class Graph:
     #connect vertices u and v with an edge of a specified colour
     def addEdge(self, u, v, colour):
         assert(u in self.vertices and v in self.vertices)
+        assert(colour < self.maxColour)
         newEdge = Edge(u, v, colour)
         self.edges.append(newEdge)
         u.addEdge(newEdge)
@@ -84,7 +85,7 @@ class Graph:
         plt.show()
 
     def copy(self):
-        newGraph = Graph()
+        newGraph = Graph(maxColour=self.maxColour)
         vertices_map = {}
         for vertex in self.vertices:
             v = Vertex()
@@ -103,65 +104,92 @@ def rewire(G):
     newGraph = G.copy()
     m = newGraph.m()
 
-    #find the first edge
-    edgeNum = random.randint(0,m-1)
-    edge = newGraph.edges[edgeNum]
+    rewireComplete = False
+    while not rewireComplete:
 
-    #find the first two vertices
-    vertexNum = random.randint(0,1)
-    if vertexNum == 0:
-        u1 = edge.v1
-        v = edge.v2
-    else:
-        u1 = edge.v2
-        v = edge.v1
+        #find the first edge
+        edgeNum = random.randint(0,m-1)
+        edge = newGraph.edges[edgeNum]
 
-    vertexDegree = u1.degree()
-    u2 = None
+        #find the first two vertices
+        vertexNum = random.randint(0,1)
+        if vertexNum == 0:
+            u1 = edge.v1
+            v = edge.v2
+        else:
+            u1 = edge.v2
+            v = edge.v1
 
-    #find the other edge and the associated vertices
-    for e in newGraph.edges:
-        if e.v1 != edge.v1 and e.v2 != edge.v2 and e.v2 != edge.v1 and e.v1 != edge.v2:
-            if e.v1.degree() == vertexDegree:
-                u2 = e.v1
-                w = e.v2
-                otherEdge = e
-            elif e.v2.degree() == vertexDegree:
-                u2 = e.v2
-                w = e.v1
-                otherEdge = e
+        vertexDegree = u1.degree()
+        u2 = None
 
-        if not u2 is None:
-            break
+        #find the other edge and the associated vertices
+        for e in newGraph.edges:
+            if e.v1 != edge.v1 and e.v2 != edge.v2 and e.v2 != edge.v1 and e.v1 != edge.v2:
+                if e.v1.degree() == vertexDegree:
+                    u2 = e.v1
+                    w = e.v2
+                    otherEdge = e
+                elif e.v2.degree() == vertexDegree:
+                    u2 = e.v2
+                    w = e.v1
+                    otherEdge = e
 
-    if u2 is None:
-        otherEdge = edge
-        otherEdgeNum = 0
-        while otherEdge == edge:
-            otherEdge = newGraph.edges[otherEdgeNum]
-            otherEdgeNum = (otherEdgeNum + 1) % m
-        u2 = otherEdge.v1
-        w = otherEdge.v2
+            if not u2 is None:
+                break
 
-    rewireAllowed = False
-    while not rewireAllowed:
+        if u2 is None:
+            otherEdge = edge
+            otherEdgeNum = 0
+            while otherEdge == edge:
+                otherEdge = newGraph.edges[otherEdgeNum]
+                otherEdgeNum = (otherEdgeNum + 1) % m
+            u2 = otherEdge.v1
+            w = otherEdge.v2
+
         #ensure that the rewire will not make the graph not proper
-        rewireAllowed = True
+
+        #categorize all the edges between u1 and w by their colour
+        colourClassesu1w = {}
+
         for incidentEdge in u1.incidentEdges:
-            if incidentEdge != edge and (incidentEdge.v1 == w or incidentEdge.v2 == w) and incidentEdge.colour == edge.colour:
-                edge.colour += 1
-                rewireAllowed = False
+            if edge != incidentEdge and (incidentEdge.v1 == w or incidentEdge.v2 == w):
+                if not incidentEdge.colour in colourClassesu1w.keys():
+                    colourClassesu1w[incidentEdge.colour] = [incidentEdge]
+                else:
+                    colourClassesu1w[incidentEdge.colour].append(incidentEdge)
+
+        #if this colour is already taken, find another one
+        if edge.colour in colourClassesu1w.keys():
+            for potentialColour in range(newGraph.maxColour-1, -1, -1):
+                if not potentialColour in colourClassesu1w.keys():
+                    edge.colour = potentialColour
+                    break
+
+        #categorize all the edges between u2 and v by their colour
+        colourClassesu2v = {}
 
         for incidentEdge in u2.incidentEdges:
-            if incidentEdge != otherEdge and (incidentEdge.v2 == v or incidentEdge.v1 == v) and incidentEdge.colour == otherEdge.colour:
-                incidentEdge.colour += 1
-                rewireAllowed = False
+            if otherEdge != incidentEdge and (incidentEdge.v1 == v or incidentEdge.v2 == v):
+                if not incidentEdge.colour in colourClassesu2v.keys():
+                    colourClassesu2v[incidentEdge.colour] = [incidentEdge]
+                else:
+                    colourClassesu2v[incidentEdge.colour].append(incidentEdge)
 
-    newGraph.removeEdge(edge)
-    newGraph.removeEdge(otherEdge)
+        #if this colour is already taken, find another one
+        if otherEdge.colour in colourClassesu2v.keys():
+            for potentialColour in range(newGraph.maxColour-1, -1, -1):
+                if not potentialColour in colourClassesu2v.keys():
+                    otherEdge.colour = potentialColour
+                    break
 
-    newGraph.addEdge(u1, w, edge.colour)
-    newGraph.addEdge(u2, v, otherEdge.colour)
+        if not edge.colour in colourClassesu1w.keys() and not otherEdge.colour in colourClassesu2v.keys():
+            newGraph.removeEdge(edge)
+            newGraph.removeEdge(otherEdge)
+
+            newGraph.addEdge(u1, w, edge.colour)
+            newGraph.addEdge(u2, v, otherEdge.colour)
+            rewireComplete = True
 
     return newGraph
 
