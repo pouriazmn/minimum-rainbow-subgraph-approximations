@@ -3,6 +3,8 @@ import math as m
 import random
 import os
 from Koch2011 import Koch2011
+from tirodkar import Tirodkar2017
+
 
 def generateTestData(startGraph, numGraphs):
     #start with the initial graph

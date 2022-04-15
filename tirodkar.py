@@ -1,6 +1,8 @@
 import copy
 import math
 
+import Graph
+
 graph = [
     [0, 0, 0, 4, 0, 3, 0],
     [0, 0, 4, 5, 2, 4, 2],
@@ -22,6 +24,18 @@ def print_sub_graph(G, sub):
         for j in sub:
             print(G[i][j], end=", ")
         print("")
+
+
+def sub_graph(G, sub):
+    subgraph = []
+    for i in sub:
+        adjacency = []
+        for j in sub:
+            adjacency.append(G[i][j])
+        subgraph.append(adjacency)
+    return subgraph
+
+
 
 
 def distinct_colors_of_sub_graph(G, sub):
@@ -275,7 +289,14 @@ def tirodkar_mrs_procedure(G):
     return result_ver
 
 
+def Tirodkar2017(G: Graph.Graph):
+    graph = G.to_adjacency_matrix()
+    result = tirodkar_mrs_procedure(graph)
+    subgraph = sub_graph(graph, result)
+    return Graph.Graph.from_adjacency_matrix(subgraph)
+
+
 if __name__ == '__main__':
     ver = tirodkar_mrs_procedure(graph)
     print(ver)
-    print_sub_graph(graph, ver)
+    print_graph(sub_graph(graph, ver))

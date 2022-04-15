@@ -90,7 +90,7 @@ class Graph:
         n = len(adjacency_matrix)
         vertices = []
         for i in range(n):
-            v = Vertex
+            v = Vertex()
             vertices.append(v)
             graph.addVertex(v)
         for i in range(n):
@@ -98,6 +98,25 @@ class Graph:
                 if adjacency_matrix[i][j] != 0:
                     graph.addEdge(vertices[i], vertices[j], adjacency_matrix[i][j])
         return graph
+
+    def to_adjacency_matrix(self):
+        n = self.n()
+        max_colour = self.maxColour
+        matrix = [[0 for _ in range(n)] for _ in range(n)]
+        for edge in self.edges:
+            v1 = edge.v1
+            v2 = edge.v2
+            v1_ind = self.vertices.index(v1)
+            v2_ind = self.vertices.index(v2)
+            if edge.colour == 0:
+                c = max_colour + 1
+            else:
+                c = edge.colour
+            matrix[v1_ind][v2_ind] = c
+            matrix[v2_ind][v1_ind] = c
+
+        return matrix
+
 
     def copy(self):
         newGraph = Graph(maxColour=self.maxColour)
