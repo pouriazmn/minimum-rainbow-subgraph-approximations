@@ -1,6 +1,7 @@
 import Graph as G
 import math as m
 import random
+import os
 from Koch2011 import Koch2011
 
 def generateTestData(startGraph, numGraphs):
@@ -61,7 +62,7 @@ def readTestData(fileName):
                 newGraph.newVertex()
 
             #create the edges
-            for i in range(1, len(graphData)):
+            for i in range(0, len(graphData)):
                 edgeStr = graphData[i]
                 if len(edgeStr) > 0:
                     indices = edgeStr.split(",")
@@ -116,7 +117,7 @@ def generateStartingGraphs():
             #walk through the numbers of colours
             for numColours in range(5, maxColours + colourStep, colourStep):
                 #generate the vertices of the graph
-                newGraph = G.Graph(maxColours)
+                newGraph = G.Graph(numColours)
                 for i in range(size):
                     newGraph.newVertex()
 
@@ -176,7 +177,7 @@ def generateTests():
     startGraphs = generateStartingGraphs()
     for startGraph in startGraphs:
         graphs = generateTestData(startGraph[0], 10)
-        fileName = "./newTests/TEST_" + str(startGraph[1]) + "_" + str(startGraph[2]) + "_" + str(startGraph[3]) + ".txt"
+        fileName = "./Tests/TEST_" + str(startGraph[1]) + "_" + str(startGraph[2]) + "_" + str(startGraph[3]) + ".txt"
         writeTestData([graphs, startGraph[1], startGraph[2], startGraph[3]], fileName)
         print("Test data with size = " + str(startGraph[1]) + ", density = " + str(startGraph[2]) + ", num colours = " + str(startGraph[3]) + " generated")
     pass
@@ -197,20 +198,20 @@ def runTests(mrsFunctions, sizeMin=10, sizeMax=1000):
 
                 #walk through the numbers of colours
                 for numColours in range(5, maxColours + colourStep, colourStep):
-                    fileName = "TEST_" + str(size) + "_" + str(edgeDensity) + "_" + str(numColours) + ".txt"
-
-                    for mrsFunction in mrsFunctions:
-                        results = runTestFromFile(fileName, mrsFunction)
-                        resultString = mrsFunction.__name__
-                        resultString += "," + str(results[1])
-                        resultString += "," + str(results[2])
-                        resultString += "," + str(results[3])
-                        for val in results[0]:
-                            resultString += "," + str(val)
-                        resultString += "\n"
-                        resultFile = open("results.csv", "a")
-                        resultFile.write(resultString)
-                        resultFile.close()
+                    fileName = "./Tests/TEST_" + str(size) + "_" + str(edgeDensity) + "_" + str(numColours) + ".txt"
+                    if os.path.isfile(fileName):
+                        for mrsFunction in mrsFunctions:
+                            results = runTestFromFile(fileName, mrsFunction)
+                            resultString = mrsFunction.__name__
+                            resultString += "," + str(results[1])
+                            resultString += "," + str(results[2])
+                            resultString += "," + str(results[3])
+                            for val in results[0]:
+                                resultString += "," + str(val)
+                            resultString += "\n"
+                            resultFile = open("results.csv", "a")
+                            resultFile.write(resultString)
+                            resultFile.close()
 
 if __name__ == "__main__":
-    runTests([Koch2011], sizeMax=100)
+    runTests([Koch2011])

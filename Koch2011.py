@@ -19,7 +19,7 @@ def computeValues(inputGraph, coloursNeeded):
 
 def Koch2011(inputGraph):
     n = inputGraph.n()
-    H = G.Graph()
+    H = G.Graph(inputGraph.maxColour)
     coloursNeeded = []
 
     for edge in inputGraph.edges:

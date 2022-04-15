@@ -197,6 +197,6 @@ def randomGraph(G):
     k = G.m()
     newGraph = G.copy()
 
-    for i in range(k):
+    for _ in range(k):
         newGraph = rewire(newGraph)
     return newGraph
