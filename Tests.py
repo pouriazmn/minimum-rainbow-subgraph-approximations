@@ -2,6 +2,7 @@ import Graph as G
 import math as m
 import random
 import os
+from statistics import mean
 from Koch2011 import Koch2011
 from tirodkar import Tirodkar2017
 from schiermeyer2013 import Schiermeyer2013
@@ -187,7 +188,7 @@ def generateTests():
 
 #will run all generated tests on graphs of size sizeMin to sizeMax (inclusive) and write the results to the results csv
 #mrsFunctions should be a list of functions that accept exactly one parameter (the graph) and returns exactly a rainbow subgraph
-def runTests(mrsFunctions, sizeMin=10, sizeMax=50):
+def runTests(mrsFunctions, sizeMin=10, sizeMax=1000):
     for size in sizes:
         if size >= sizeMin and size <= sizeMax:
             for edgeDensity in range(10,90,10):
@@ -212,9 +213,70 @@ def runTests(mrsFunctions, sizeMin=10, sizeMax=50):
                             for val in results[0]:
                                 resultString += "," + str(val)
                             resultString += "\n"
-                            resultFile = open("results-schiermeyer.csv", "a")
+                            resultFile = open("results-koch.csv", "a")
                             resultFile.write(resultString)
                             resultFile.close()
 
+def produceAnalysis(fileNames):
+    for fileName in fileNames:
+        file = open(fileName, "r")
+        resultString = file.read()
+        file.close()
+
+        name = None
+        resultsBySize = {}
+        resultsByDensity = {}
+        resultsByColours = {}
+
+        experiments = resultString.split("\n")
+        for experiment in experiments:
+            if len(experiment) > 0:
+                vals = experiment.split(",")
+                if name is None:
+                    name = vals[0]
+
+                size = int(vals[1])
+                density = int(vals[2])
+                num_colours = int(vals[3])
+
+                if not size in resultsBySize.keys():
+                    resultsBySize[size] = []
+                if not density in resultsByDensity.keys():
+                    resultsByDensity[density] = []
+                if not num_colours in resultsByColours.keys():
+                    resultsByColours[num_colours] = []
+
+                for i in range(4, len(vals)):
+                    resultsBySize[size].append(int(vals[i]))
+                    resultsByDensity[density].append(int(vals[i]))
+                    resultsByColours[num_colours].append(int(vals[i]))
+
+        #write the results for analysis by size
+        for size in resultsBySize.keys():
+            avgBySize = mean(resultsBySize[size])
+            analysisFile = open("results-analysis-size.csv", "a")
+            analysisFile.write(name + "," + str(size) + "," + str(avgBySize))
+            analysisFile.write("\n")
+            analysisFile.close()
+
+        #write the results for analysis by density
+        for density in resultsByDensity.keys():
+            avgByDensity = mean(resultsByDensity[density])
+            analysisFile = open("results-analysis-density.csv", "a")
+            analysisFile.write(name + "," + str(density) + "," + str(avgByDensity))
+            analysisFile.write("\n")
+            analysisFile.close()
+
+        #write the results for analysis by number of colours
+        for numColours in resultsByColours.keys():
+            avgByColours = mean(resultsByColours[numColours])
+            analysisFile = open("results-analysis-colours.csv", "a")
+            analysisFile.write(name + "," + str(numColours) + "," + str(avgByColours))
+            analysisFile.write("\n")
+            analysisFile.close()
+
+                
+                
+
 if __name__ == "__main__":
-    runTests([Schiermeyer2013])
+    produceAnalysis(["results-koch.csv", "results-schiermeyer.csv", "results-tirodkar.csv"])
