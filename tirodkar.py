@@ -269,8 +269,11 @@ def remove_all_colors_present_in_subgraph(G, sub):
 
 
 def tirodkar_mrs_procedure(G):
+    print("----------------------------------")
     p = distinct_colors_of_sub_graph(G, range(len(G)))
     min_n_ver, max_n_ver = int(math.sqrt(p)), min(p * 2 + 1, len(G))
+    print(f"{p} colors, min_k = {min_n_ver}, max_k = {max_n_ver}, size: {len(G)}")
+    print_graph(G)
 
     result_ver = None
     result_n_ver = len(G)
@@ -286,6 +289,9 @@ def tirodkar_mrs_procedure(G):
             result_n_ver = len(vertices)
             result_ver = vertices
 
+    print(f"result k = {result_n_ver}, {result_ver}")
+    print_sub_graph(G, result_ver)
+
     return result_ver
 
 
@@ -293,7 +299,8 @@ def Tirodkar2017(G: Graph.Graph):
     graph = G.to_adjacency_matrix()
     result = tirodkar_mrs_procedure(graph)
     subgraph = sub_graph(graph, result)
-    return Graph.Graph.from_adjacency_matrix(subgraph)
+    color_size = distinct_colors_of_sub_graph(graph, result)
+    return Graph.Graph.from_adjacency_matrix(subgraph, color_size)
 
 
 if __name__ == '__main__':

@@ -2,15 +2,13 @@ import logging
 # logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 class Node:
-    index = 0
 
-    def __init__(self):
+    def __init__(self, index=None):
         self.neighbors = []
         self.is_visited = False
         self.parent = None
         self.mate = None
-        self.index = Node.index
-        Node.index += 1
+        self.index = index
 
 
     def __repr__(self):
@@ -90,7 +88,7 @@ class Match:
 
     @staticmethod
     def from_edges(N, edges):
-        nodes = [Node() for i in range(N)]
+        nodes = [Node(i) for i in range(N)]
         for i, j in edges:
             nodes[i].neighbors.append(nodes[j])
         return Match(nodes)

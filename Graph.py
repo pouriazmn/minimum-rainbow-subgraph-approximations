@@ -48,7 +48,7 @@ class Graph:
     #connect vertices u and v with an edge of a specified colour
     def addEdge(self, u, v, colour):
         assert(u in self.vertices and v in self.vertices)
-        assert(colour < self.maxColour)
+        # assert(colour < self.maxColour)
         newEdge = Edge(u, v, colour)
         self.edges.append(newEdge)
         u.addEdge(newEdge)
@@ -85,8 +85,8 @@ class Graph:
         plt.show()
 
     @classmethod
-    def from_adjacency_matrix(cls, adjacency_matrix):
-        graph = cls()
+    def from_adjacency_matrix(cls, adjacency_matrix, maxColor):
+        graph = cls(maxColor)
         n = len(adjacency_matrix)
         vertices = []
         for i in range(n):
@@ -96,7 +96,10 @@ class Graph:
         for i in range(n):
             for j in range(n):
                 if adjacency_matrix[i][j] != 0:
-                    graph.addEdge(vertices[i], vertices[j], adjacency_matrix[i][j])
+                    color = adjacency_matrix[i][j]
+                    if color == maxColor:
+                        color = 0
+                    graph.addEdge(vertices[i], vertices[j], color)
         return graph
 
     def to_adjacency_matrix(self):
@@ -109,7 +112,7 @@ class Graph:
             v1_ind = self.vertices.index(v1)
             v2_ind = self.vertices.index(v2)
             if edge.colour == 0:
-                c = max_colour + 1
+                c = max_colour
             else:
                 c = edge.colour
             matrix[v1_ind][v2_ind] = c

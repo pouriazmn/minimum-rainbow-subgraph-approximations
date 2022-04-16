@@ -4,6 +4,7 @@ import random
 import os
 from Koch2011 import Koch2011
 from tirodkar import Tirodkar2017
+from schiermeyer2013 import Schiermeyer2013
 
 
 def generateTestData(startGraph, numGraphs):
@@ -186,7 +187,7 @@ def generateTests():
 
 #will run all generated tests on graphs of size sizeMin to sizeMax (inclusive) and write the results to the results csv
 #mrsFunctions should be a list of functions that accept exactly one parameter (the graph) and returns exactly a rainbow subgraph
-def runTests(mrsFunctions, sizeMin=10, sizeMax=1000):
+def runTests(mrsFunctions, sizeMin=10, sizeMax=50):
     for size in sizes:
         if size >= sizeMin and size <= sizeMax:
             for edgeDensity in range(10,90,10):
@@ -211,9 +212,9 @@ def runTests(mrsFunctions, sizeMin=10, sizeMax=1000):
                             for val in results[0]:
                                 resultString += "," + str(val)
                             resultString += "\n"
-                            resultFile = open("results.csv", "a")
+                            resultFile = open("results-schiermeyer.csv", "a")
                             resultFile.write(resultString)
                             resultFile.close()
 
 if __name__ == "__main__":
-    runTests([Koch2011])
+    runTests([Schiermeyer2013])
