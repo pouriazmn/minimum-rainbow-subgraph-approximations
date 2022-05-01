@@ -2,21 +2,20 @@ import Graph as G
 import math as m
 import random
 import os
+import multiprocessing
+import threading
 from statistics import mean
 from Koch2011 import Koch2011
 from tirodkar import Tirodkar2017
 from schiermeyer2013 import Schiermeyer2013
 
-
-def generateTestData(startGraph, numGraphs):
+def generateTestData(startGraph, numGraphs, graphs):
     #start with the initial graph
-    graphs = []
     graphs.append(startGraph)
 
     #generate a sequence of random graphs
     for i in range(numGraphs):
         graphs.append(G.randomGraph(graphs[i]))
-    return graphs
 
 def writeTestData(testData, fileName):
     graphs = testData[0]
@@ -100,89 +99,72 @@ def runTest(testData, mrsFunction, draw=False):
 def runTestFromFile(testFile, mrsFunction, draw=False):
     return runTest(readTestData(testFile), mrsFunction, draw=draw)
 
+def generateStartingGraph(size, density, maxColour, graphs):
+    edgeDensityFraction = density / 100
+
+    #generate the vertices of the graph
+    newGraph = G.Graph(maxColour)
+    for i in range(size):
+        newGraph.newVertex()
+
+    #generate the edges
+    for u in newGraph.vertices:
+        for v in newGraph.vertices:
+            edgeProbability = random.random()
+            if edgeProbability < edgeDensityFraction:
+                newGraph.addEdge(u, v, 0)
+
+    #generate the colours
+    toBeColoured = newGraph.edges.copy()
+    colourNum = 0
+    while len(toBeColoured) > 0:
+        edgeIndex = random.randint(0, len(toBeColoured)-1)
+        edge = toBeColoured[edgeIndex]
+        edge.colour = colourNum
+        toBeColoured.remove(edge)
+        colourNum = (colourNum + 1) % maxColour
+
+    print("start graph with size=" + str(size) + ", density = " + str(density) + ", and num colours = " + str(maxColour) + " generated.")
+    graphs.append([newGraph, size, density, maxColour])
+
 sizes = [10, 50, 100, 200, 500, 1000]
-def generateStartingGraphs():
-    graphs = []
-
-    #walk through all sizes
-    for size in sizes:
-        #walk through all edge densities
-        for edgeDensity in range(10, 90, 10):
-            edgeDensityFraction = edgeDensity / 100
+def generateTests(size):
+    startGraphs = []
+    startGraphThreads = []
+    #walk through all edge densities
+    for edgeDensity in range(10, 90, 10):
         
-            #figure out what the colour parameters will be
-            maxColours = int(m.sqrt(size))
-            if(maxColours < 5):
-                maxColours = 5
-            colourStep = m.ceil((maxColours - 5) / 5)
-            if colourStep < 1:
-                colourStep = 1
+        #figure out what the colour parameters will be
+        maxColours = int(m.sqrt(size))
+        if(maxColours < 5):
+            maxColours = 5
+        colourStep = m.ceil((maxColours - 5) / 5)
+        if colourStep < 1:
+            colourStep = 1
 
-            #walk through the numbers of colours
-            for numColours in range(5, maxColours + colourStep, colourStep):
-                #generate the vertices of the graph
-                newGraph = G.Graph(numColours)
-                for i in range(size):
-                    newGraph.newVertex()
+        #walk through the numbers of colours
+        for numColours in range(5, maxColours + colourStep, colourStep):
+            startGraphThreads.append(threading.Thread(target=generateStartingGraph, args=(size,edgeDensity, numColours, startGraphs,)))
+            startGraphThreads[len(startGraphThreads)-1].start()
 
-                #generate the edges
-                for u in newGraph.vertices:
-                    for v in newGraph.vertices:
-                        edgeProbability = random.random()
-                        if edgeProbability < edgeDensityFraction:
-                            newGraph.addEdge(u, v, 0)
+    for thread in startGraphThreads:
+        thread.join()
+    print("All threads joined - start graphs")
 
-                #generate the colours
-                toBeColoured = newGraph.edges.copy()
-                colourNum = 0
-                while len(toBeColoured) > 0:
-                    edgeIndex = random.randint(0, len(toBeColoured)-1)
-                    edge = toBeColoured[edgeIndex]
-                    edge.colour = colourNum
-                    toBeColoured.remove(edge)
-                    colourNum = (colourNum + 1) % numColours
-
-                #ensure that the colouring is proper
-                for v in newGraph.vertices:
-                    #categorize all the edges incident to v by which neighbour they connect v to
-                    neighbours = {}
-                    for edge in v.incidentEdges:
-                        if edge.v1 == v:
-                            u = edge.v2
-                        else:
-                            u = edge.v1
-
-                        if not u in neighbours.keys():
-                            neighbours[u] = [edge]
-                        else:
-                            neighbours[u].append(edge)
-
-                    #see if there are two edges of the same colour between two v and any of its neighbours
-                    for u in neighbours.keys():
-                        edges = neighbours[u]
-                        colourClasses = {}
-                        for edge in edges:
-                            if not edge.colour in colourClasses.keys():
-                                colourClasses[edge.colour] = edge
-                            #if this colour is a repeat, find an available colour to change this colour to
-                            else:
-                                for i in range(numColours-1, -1, -1):
-                                    if not i in colourClasses.keys():
-                                        edge.colour = i
-
-                                assert(not edge.colour in colourClasses.keys())
-                                assert(edge.colour < numColours)
-
-                print("start graph with size=" + str(size) + ", density = " + str(edgeDensity) + ", and num colours = " + str(numColours) + " generated.")
-                graphs.append([newGraph, size, edgeDensity, numColours])
-    return graphs
-
-def generateTests():
-    startGraphs = generateStartingGraphs()
+    testDataThreads = []
+    graphs = {}
     for startGraph in startGraphs:
-        graphs = generateTestData(startGraph[0], 10)
+        graphs[startGraph[0]] = []
+        testDataThreads.append(threading.Thread(target=generateTestData, args=(startGraph[0], 10, graphs[startGraph[0]],)))
+        testDataThreads[len(testDataThreads)-1].start()
+
+    for thread in testDataThreads:
+        thread.join()
+    print("All threads joined - test data")
+
+    for startGraph in startGraphs:
         fileName = "./Tests/TEST_" + str(startGraph[1]) + "_" + str(startGraph[2]) + "_" + str(startGraph[3]) + ".txt"
-        writeTestData([graphs, startGraph[1], startGraph[2], startGraph[3]], fileName)
+        writeTestData([graphs[startGraph[0]], startGraph[1], startGraph[2], startGraph[3]], fileName)
         print("Test data with size = " + str(startGraph[1]) + ", density = " + str(startGraph[2]) + ", num colours = " + str(startGraph[3]) + " generated")
     pass
 
@@ -275,8 +257,8 @@ def produceAnalysis(fileNames):
             analysisFile.write("\n")
             analysisFile.close()
 
-                
-                
-
 if __name__ == "__main__":
-    produceAnalysis(["results-koch.csv", "results-schiermeyer.csv", "results-tirodkar.csv"])
+    tests_500 = multiprocessing.Process(target=generateTests, args=(500,))
+    tests_500.start()
+    tests_1000 = multiprocessing.Process(target=generateTests, args=(1000,))
+    tests_1000.start()
