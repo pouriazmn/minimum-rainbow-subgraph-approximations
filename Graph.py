@@ -42,27 +42,25 @@ class Edge:
 
     # create an edge between v1 and v2 with a specific colour
     def __init__(self, v1: Vertex, v2: Vertex, colour):
-        self.v1 = v1
-        self.v2 = v2
+        self.v1: Vertex = v1
+        self.v2: Vertex = v2
         self.colour = colour
 
-    def __eq__(self, other):
-        return (self.v1 == other.v1 and self.v2 == other.v2) or (self.v1 == other.v2 and self.v2 == other.v1)
-
-    def __ne__(self, other):
-        return not (self.__eq__(other))
+    def equal(self, other):
+        return self.colour == other.colour and \
+               (self.v1 == other.v1 and self.v2 == other.v2) or (self.v1 == other.v2 and self.v2 == other.v1)
 
     def __hash__(self):
-        return id(self)
+        return hash(id(self))
 
     def __bool__(self):
         return True
 
     def __str__(self):
-        return f"<{self.v1}, {self.v2}, {self.colour}>"
+        return f"({self.v1}, {self.v2}, {self.colour})"
 
     def __repr__(self):
-        return f"<{self.v1}, {self.v2}, {self.colour}>"
+        return f"({self.v1}, {self.v2}, {self.colour})"
 
 
 class Graph:
@@ -197,7 +195,7 @@ def rewire(G):
     otherEdge = None
     # find the other edge and the associated vertices
     for e in newGraph.edges:
-        if e != edge:
+        if not e.equal(edge):
             if e.v1.degree() == vertexDegree \
                     and u1 != e.v2 \
                     and v != e.v1:
@@ -217,7 +215,7 @@ def rewire(G):
     # if we couldn't find an edge satisfying the conditions, pick an arbitrary edge
     if otherEdge is None:
         for e in newGraph.edges:
-            if e != edge \
+            if not e.equal(edge) \
                     and u1 != e.v2 \
                     and v != e.v1:
                 u2 = e.v1
