@@ -10,14 +10,15 @@ from tirodkar import Tirodkar2017
 from schiermeyer2013 import Schiermeyer2013
 
 
-def generateTestData(startGraph, numGraphs, graphs):
+def generateTestData(startGraph, numGraphs):
+    graphs = []
     # start with the initial graph
     graphs.append(startGraph)
 
     # generate a sequence of random graphs
     for i in range(numGraphs):
         graphs.append(G.randomGraph(graphs[i]))
-
+    return graphs
 
 def writeTestData(testData, fileName):
     graphs = testData[0]
@@ -103,7 +104,7 @@ def runTestFromFile(testFile, mrsFunction, draw=False):
     return runTest(readTestData(testFile), mrsFunction, draw=draw)
 
 
-def generateStartingGraph(size, density, maxColour, graphs):
+def generateStartingGraph(size, density, maxColour):
     edgeDensityFraction = density / 100
 
     # generate the vertices of the graph
@@ -131,12 +132,16 @@ def generateStartingGraph(size, density, maxColour, graphs):
         colourNum = (colourNum + 1) % maxColour
 
     print("start graph with size=" + str(size) + ", density = " + str(density) + ", and num colours = " + str(maxColour) + " generated.")
-    graphs.append([newGraph, size, density, maxColour])
+    return newGraph
+
+def generateTest(size, density, maxColour):
+    startGraph = generateStartingGraph(size, density, maxColour)
+    graphs = generateTestData(startGraph, 10)
+    print("Test data with size = " + str(size) + ", density = " + str(density) + ", num colours = " + str(maxColour) + " generated")
+    writeTestData([graphs, size, density, maxColour], "Ignored_Tests/TEST_" + str(size) + "_" + str(density) + "_" + str(maxColour) + ".txt")
 
 sizes = [10, 50, 100, 200, 500, 1000]
 def generateTests(size):
-    startGraphs = []
-    startGraphThreads = []
     #walk through all edge densities
     for edgeDensity in range(10, 90, 10):
         
@@ -150,22 +155,8 @@ def generateTests(size):
 
         #walk through the numbers of colours
         for numColours in range(5, maxColours + colourStep, colourStep):
-            startGraphThreads.append(threading.Thread(target=generateStartingGraph, args=(size,edgeDensity, numColours, startGraphs,)))
-            startGraphThreads[len(startGraphThreads)-1].start()
-
-    for thread in startGraphThreads:
-        thread.join()
-    print("Start graphs for n = " + str(size) + " completed")
-
-    graphs = {}
-    for startGraph in startGraphs:
-        graphs[startGraph[0]] = []
-        generateTestData(startGraph[0], 10, graphs[startGraph[0]])
-
-    for startGraph in startGraphs:
-        fileName = "./Tests/TEST_" + str(startGraph[1]) + "_" + str(startGraph[2]) + "_" + str(startGraph[3]) + ".txt"
-        writeTestData([graphs[startGraph[0]], startGraph[1], startGraph[2], startGraph[3]], fileName)
-        print("Test data with size = " + str(startGraph[1]) + ", density = " + str(startGraph[2]) + ", num colours = " + str(startGraph[3]) + " generated")
+            thread = threading.Thread(target=generateTest, args=(size, edgeDensity, numColours,))
+            thread.start()
 
 #will run all generated tests on graphs of size sizeMin to sizeMax (inclusive) and write the results to the results csv
 #mrsFunction should be a function that accepts exactly one parameter (the graph) and returns exactly a rainbow subgraph
@@ -257,9 +248,9 @@ def produceAnalysis(fileNames):
 
 
 if __name__ == "__main__":
-    tests_200 = multiprocessing.Process(target=generateTests, args=(200,))
-    tests_500 = multiprocessing.Process(target=generateTests, args=(500,))
-    tests_1000 = multiprocessing.Process(target=generateTests, args=(1000,))
+    tests_200 = multiprocessing.Process(target=generateTests, args=(10,))
+    tests_500 = multiprocessing.Process(target=generateTests, args=(50,))
+    tests_1000 = multiprocessing.Process(target=generateTests, args=(100,))
 
     tests_200.start()
     tests_500.start()
