@@ -5,7 +5,6 @@ from typing import List, Dict
 import networkx as nx
 from matplotlib import pyplot as plt
 
-
 class Vertex:
     # create a vertex
     def __init__(self, index):
@@ -71,6 +70,7 @@ class Graph:
         self.vertices: Dict[int][Vertex] = dict()
         self.edges: List[Edge] = []
         self.colours = defaultdict(set)
+        self.degrees = defaultdict(list)
         self.maxColour = maxColour
 
     @property
@@ -112,12 +112,12 @@ class Graph:
     # connect vertices u and v with an edge of a specified colour
     def addEdge(self, u: Vertex, v: Vertex, colour):
         assert self.vertices[v.index] is v and self.vertices[u.index] is u
-        assert u is not v
-        newEdge = Edge(u, v, colour)
-        self.edges.append(newEdge)
-        u.addEdge(newEdge)
-        v.addEdge(newEdge)
-        self.colours[colour].add(newEdge)
+        if(u is not v):
+            newEdge = Edge(u, v, colour)
+            self.edges.append(newEdge)
+            u.addEdge(newEdge)
+            v.addEdge(newEdge)
+            self.colours[colour].add(newEdge)
 
     def removeEdge(self, edge: Edge):
         assert edge is not None
@@ -130,6 +130,13 @@ class Graph:
     def adjacent(self, u: Vertex, v: Vertex):
         assert self.vertices[v.index] is v and self.vertices[u.index] is u
         return u in v.neighbours
+
+    def computeDegreeDict(self):
+        self.degrees = defaultdict(list)
+        n = self.n()
+        for i in range(n):
+            v = self.vertices[i]
+            self.degrees[v.degree()].append(v)
 
     def toNX(self):
         nx_graph = nx.MultiGraph()
@@ -173,12 +180,11 @@ class Graph:
 
 
 def rewire(G):
-    newGraph = G
-    m = newGraph.m()
+    m = G.m()
 
     # find the first edge
     edgeNum = random.randint(0, m - 1)
-    edge = newGraph.edges[edgeNum]
+    edge = G.edges[edgeNum]
 
     # find the first two vertices
     vertexNum = random.randint(0, 1)
@@ -193,42 +199,43 @@ def rewire(G):
     u2 = None
     w = None
     otherEdge = None
-    # find the other edge and the associated vertices
-    for e in newGraph.edges:
-        if not e.equal(edge):
-            if e.v1.degree() == vertexDegree \
-                    and u1 != e.v2 \
-                    and v != e.v1:
-                u2 = e.v1
-                w = e.v2
-                otherEdge = e
-            elif e.v2.degree() == vertexDegree \
-                    and u1 != e.v1 \
-                    and v != e.v2:
-                u2 = e.v2
-                w = e.v1
-                otherEdge = e
 
-        if otherEdge:
-            break
+    #find all the eligible edges
+    eligibleEdges = []
+    for vertex in G.degrees[vertexDegree]:
+        for potentialEdge in vertex.incidentEdges:
+            if not potentialEdge in eligibleEdges and potentialEdge is not edge:
+                eligibleEdges.append(potentialEdge)
 
-    # if we couldn't find an edge satisfying the conditions, pick an arbitrary edge
-    if otherEdge is None:
-        for e in newGraph.edges:
-            if not e.equal(edge) \
-                    and u1 != e.v2 \
-                    and v != e.v1:
-                u2 = e.v1
-                w = e.v2
-                otherEdge = e
+    #if there is an eligible edge, pick one
+    if len(eligibleEdges) > 0:
+        otherEdge = eligibleEdges[random.randint(0, len(eligibleEdges)-1)]
+    
+        if otherEdge.v1.degree() == vertexDegree:
+            u2 = otherEdge.v1
+            w = otherEdge.v2
+        else:
+            u2 = otherEdge.v2
+            w = otherEdge.v1
+    
+    #otherwise, choose an edge uniformly at random
+    else:
+        otherEdge = edge
+        while otherEdge is edge:
+            otherEdge = G.edges[random.randint(0, len(G.edges)-1)]
 
-    newGraph.removeEdge(edge)
-    newGraph.removeEdge(otherEdge)
+        if otherEdge.v1 is u1:
+            u2 = otherEdge.v2
+            w = otherEdge.v1
+        else:
+            u2 = otherEdge.v1
+            w = otherEdge.v2
 
-    newGraph.addEdge(u1, w, edge.colour)
-    newGraph.addEdge(u2, v, otherEdge.colour)
+    G.removeEdge(edge)
+    G.removeEdge(otherEdge)
 
-    return newGraph
+    G.addEdge(u1, w, edge.colour)
+    G.addEdge(u2, v, otherEdge.colour)
 
 
 def randomGraph(G):
@@ -236,5 +243,6 @@ def randomGraph(G):
     newGraph = G.copy()
 
     for _ in range(k):
-        newGraph = rewire(newGraph)
+        newGraph.computeDegreeDict()
+        rewire(newGraph)
     return newGraph
