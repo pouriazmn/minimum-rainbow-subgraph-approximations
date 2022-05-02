@@ -10,25 +10,25 @@ class Vertex:
     # create a vertex
     def __init__(self, index):
         self.index = index
-        self._incidentEdges = set()
-        self.neighbours = set()
+        self.incidentEdges = set()
+        self.neighbours = list()
 
     # check how many edges this vertex is incident to
     def degree(self):
-        return len(self._incidentEdges)
+        return len(self.incidentEdges)
 
     # add a new edge we are incident to
     def addEdge(self, newEdge):
         assert (newEdge.v1 is self or newEdge.v2 is self)
-        self._incidentEdges.add(newEdge)
+        self.incidentEdges.add(newEdge)
         if newEdge.v1 is self:
-            self.neighbours.add(newEdge.v2)
+            self.neighbours.append(newEdge.v2)
         else:
-            self.neighbours.add(newEdge.v1)
+            self.neighbours.append(newEdge.v1)
 
     def removeEdge(self, edge):
         assert (edge.v1 is self or edge.v2 is self)
-        self._incidentEdges.remove(edge)
+        self.incidentEdges.remove(edge)
         if edge.v1 is self:
             self.neighbours.remove(edge.v2)
         else:
@@ -72,7 +72,7 @@ class Graph:
         self._vertex_index = 0
         self.vertices: Dict[int][Vertex] = dict()
         self.edges: List[Edge] = []
-        self.colours = defaultdict(list)
+        self.colours = defaultdict(set)
         self.maxColour = maxColour
 
     @property
@@ -119,7 +119,7 @@ class Graph:
         self.edges.append(newEdge)
         u.addEdge(newEdge)
         v.addEdge(newEdge)
-        self.colours[colour].append(newEdge)
+        self.colours[colour].add(newEdge)
 
     def removeEdge(self, edge: Edge):
         assert edge is not None
@@ -199,16 +199,12 @@ def rewire(G):
     for e in newGraph.edges:
         if e != edge:
             if e.v1.degree() == vertexDegree \
-                    and v not in e.v1.neighbours \
-                    and u1 not in e.v2.neighbours \
                     and u1 != e.v2 \
                     and v != e.v1:
                 u2 = e.v1
                 w = e.v2
                 otherEdge = e
             elif e.v2.degree() == vertexDegree \
-                    and v not in e.v2.neighbours \
-                    and u1 not in e.v1.neighbours \
                     and u1 != e.v1 \
                     and v != e.v2:
                 u2 = e.v2
@@ -222,17 +218,11 @@ def rewire(G):
     if otherEdge is None:
         for e in newGraph.edges:
             if e != edge \
-                    and v not in e.v1.neighbours \
-                    and u1 not in e.v2.neighbours \
                     and u1 != e.v2 \
                     and v != e.v1:
                 u2 = e.v1
                 w = e.v2
                 otherEdge = e
-
-    # if still we could not find a pair of disjoint vertices to match this edge we should select the random edge again.
-    if otherEdge is None:
-        return False, newGraph
 
     newGraph.removeEdge(edge)
     newGraph.removeEdge(otherEdge)
@@ -240,7 +230,7 @@ def rewire(G):
     newGraph.addEdge(u1, w, edge.colour)
     newGraph.addEdge(u2, v, otherEdge.colour)
 
-    return True, newGraph
+    return newGraph
 
 
 def randomGraph(G):
@@ -248,10 +238,5 @@ def randomGraph(G):
     newGraph = G.copy()
 
     for _ in range(k):
-        c = 2
-        success, newGraph = rewire(newGraph)
-        while not success:
-            print(f"attempt {c}")
-            success, newGraph = rewire(newGraph)
-            c += 1
+        newGraph = rewire(newGraph)
     return newGraph
