@@ -9,13 +9,15 @@ from Koch2011 import Koch2011
 from tirodkar import Tirodkar2017
 from schiermeyer2013 import Schiermeyer2013
 
+
 def generateTestData(startGraph, numGraphs, graphs):
-    #start with the initial graph
+    # start with the initial graph
     graphs.append(startGraph)
 
-    #generate a sequence of random graphs
+    # generate a sequence of random graphs
     for i in range(numGraphs):
         graphs.append(G.randomGraph(graphs[i]))
+
 
 def writeTestData(testData, fileName):
     graphs = testData[0]
@@ -24,21 +26,22 @@ def writeTestData(testData, fileName):
     maxColour = testData[3]
 
     testDataString = str(size) + "," + str(density) + "," + str(maxColour) + "#\n"
-    #create a string for each test graph
+    # create a string for each test graph
     for graph in graphs:
 
-        #write each edge
+        # write each edge
         for edge in graph.edges:
-            testDataString += str(graph.vertices.index(edge.v1)) + "," + str(graph.vertices.index(edge.v2)) + "," + str(edge.colour) + "\n"
-        testDataString += "#" #between the graphs
+            testDataString += str(edge.v1.index) + "," + str(edge.v2.index) + "," + str(edge.colour) + "\n"
+        testDataString += "#" # between the graphs
     
     #write to the file
     file = open(fileName, "w")
     file.write(testDataString)
     file.close()
 
+
 def readTestData(fileName):
-    #open the file containing the test data
+    # open the file containing the test data
     file = open(fileName, "r")
     testDataString = file.read()
     file.close()
@@ -52,7 +55,7 @@ def readTestData(fileName):
     density = int(params[1])
     maxColour = int(params[2])
 
-    #parse the string for each test into a graph object
+    # parse the string for each test into a graph object
     for i in range(1, len(testDataStrings)):
         testString = testDataStrings[i]
 
@@ -60,11 +63,11 @@ def readTestData(fileName):
             graphData = testString.split("\n")
 
             newGraph = G.Graph(maxColour)
-            #create the vertices
+            # create the vertices
             for i in range(size):
-                newGraph.newVertex()
+                newGraph.newVertex(i)
 
-            #create the edges
+            # create the edges
             for i in range(0, len(graphData)):
                 edgeStr = graphData[i]
                 if len(edgeStr) > 0:
@@ -99,22 +102,25 @@ def runTest(testData, mrsFunction, draw=False):
 def runTestFromFile(testFile, mrsFunction, draw=False):
     return runTest(readTestData(testFile), mrsFunction, draw=draw)
 
+
 def generateStartingGraph(size, density, maxColour, graphs):
     edgeDensityFraction = density / 100
 
-    #generate the vertices of the graph
+    # generate the vertices of the graph
     newGraph = G.Graph(maxColour)
     for _ in range(size):
         newGraph.newVertex()
 
-    #generate the edges
-    for u in newGraph.vertices:
-        for v in newGraph.vertices:
+    # generate the edges
+    for u in newGraph.vertices.values():
+        for v in newGraph.vertices.values():
+            if u is v or v in u.neighbours:  # no self edges or multiple edges
+                continue
             edgeProbability = random.random()
             if edgeProbability < edgeDensityFraction:
                 newGraph.addEdge(u, v, 0)
 
-    #generate the colours
+    # generate the colours
     toBeColoured = newGraph.edges.copy()
     colourNum = 0
     while len(toBeColoured) > 0:
@@ -248,6 +254,7 @@ def produceAnalysis(fileNames):
             analysisFile.write(name + "," + str(numColours) + "," + str(avgByColours))
             analysisFile.write("\n")
             analysisFile.close()
+
 
 if __name__ == "__main__":
     tests_200 = multiprocessing.Process(target=generateTests, args=(200,))
