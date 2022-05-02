@@ -104,7 +104,7 @@ def generateStartingGraph(size, density, maxColour, graphs):
 
     #generate the vertices of the graph
     newGraph = G.Graph(maxColour)
-    for i in range(size):
+    for _ in range(size):
         newGraph.newVertex()
 
     #generate the edges
@@ -149,28 +149,21 @@ def generateTests(size):
 
     for thread in startGraphThreads:
         thread.join()
-    print("All threads joined - start graphs")
+    print("Start graphs for n = " + str(size) + " completed")
 
-    testDataThreads = []
     graphs = {}
     for startGraph in startGraphs:
         graphs[startGraph[0]] = []
-        testDataThreads.append(threading.Thread(target=generateTestData, args=(startGraph[0], 10, graphs[startGraph[0]],)))
-        testDataThreads[len(testDataThreads)-1].start()
-
-    for thread in testDataThreads:
-        thread.join()
-    print("All threads joined - test data")
+        generateTestData(startGraph[0], 10, graphs[startGraph[0]])
 
     for startGraph in startGraphs:
         fileName = "./Tests/TEST_" + str(startGraph[1]) + "_" + str(startGraph[2]) + "_" + str(startGraph[3]) + ".txt"
         writeTestData([graphs[startGraph[0]], startGraph[1], startGraph[2], startGraph[3]], fileName)
         print("Test data with size = " + str(startGraph[1]) + ", density = " + str(startGraph[2]) + ", num colours = " + str(startGraph[3]) + " generated")
-    pass
 
 #will run all generated tests on graphs of size sizeMin to sizeMax (inclusive) and write the results to the results csv
-#mrsFunctions should be a list of functions that accept exactly one parameter (the graph) and returns exactly a rainbow subgraph
-def runTests(mrsFunctions, sizeMin=10, sizeMax=1000):
+#mrsFunction should be a function that accepts exactly one parameter (the graph) and returns exactly a rainbow subgraph
+def runTests(mrsFunction, outputFile, sizeMin=10, sizeMax=1000):
     for size in sizes:
         if size >= sizeMin and size <= sizeMax:
             for edgeDensity in range(10,90,10):
@@ -186,18 +179,17 @@ def runTests(mrsFunctions, sizeMin=10, sizeMax=1000):
                 for numColours in range(5, maxColours + colourStep, colourStep):
                     fileName = "./Tests/TEST_" + str(size) + "_" + str(edgeDensity) + "_" + str(numColours) + ".txt"
                     if os.path.isfile(fileName):
-                        for mrsFunction in mrsFunctions:
-                            results = runTestFromFile(fileName, mrsFunction)
-                            resultString = mrsFunction.__name__
-                            resultString += "," + str(results[1])
-                            resultString += "," + str(results[2])
-                            resultString += "," + str(results[3])
-                            for val in results[0]:
-                                resultString += "," + str(val)
-                            resultString += "\n"
-                            resultFile = open("results-koch.csv", "a")
-                            resultFile.write(resultString)
-                            resultFile.close()
+                        results = runTestFromFile(fileName, mrsFunction)
+                        resultString = mrsFunction.__name__
+                        resultString += "," + str(results[1])
+                        resultString += "," + str(results[2])
+                        resultString += "," + str(results[3])
+                        for val in results[0]:
+                            resultString += "," + str(val)
+                        resultString += "\n"
+                        resultFile = open(outputFile, "a")
+                        resultFile.write(resultString)
+                        resultFile.close()
 
 def produceAnalysis(fileNames):
     for fileName in fileNames:
@@ -258,7 +250,10 @@ def produceAnalysis(fileNames):
             analysisFile.close()
 
 if __name__ == "__main__":
+    tests_200 = multiprocessing.Process(target=generateTests, args=(200,))
     tests_500 = multiprocessing.Process(target=generateTests, args=(500,))
-    tests_500.start()
     tests_1000 = multiprocessing.Process(target=generateTests, args=(1000,))
+
+    tests_200.start()
+    tests_500.start()
     tests_1000.start()
