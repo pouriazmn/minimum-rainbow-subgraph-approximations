@@ -138,7 +138,7 @@ def generateTest(size, density, maxColour):
     startGraph = generateStartingGraph(size, density, maxColour)
     graphs = generateTestData(startGraph, 10)
     print("Test data with size = " + str(size) + ", density = " + str(density) + ", num colours = " + str(maxColour) + " generated")
-    writeTestData([graphs, size, density, maxColour], "Ignored_Tests/TEST_" + str(size) + "_" + str(density) + "_" + str(maxColour) + ".txt")
+    writeTestData([graphs, size, density, maxColour], "Tests/TEST_" + str(size) + "_" + str(density) + "_" + str(maxColour) + ".txt")
 
 sizes = [10, 50, 100, 200, 500, 1000]
 def generateTests(size):
@@ -248,9 +248,9 @@ def produceAnalysis(fileNames):
 
 
 if __name__ == "__main__":
-    tests_200 = multiprocessing.Process(target=generateTests, args=(10,))
-    tests_500 = multiprocessing.Process(target=generateTests, args=(50,))
-    tests_1000 = multiprocessing.Process(target=generateTests, args=(100,))
+    tests_200 = multiprocessing.Process(target=generateTests, args=(200,))
+    tests_500 = multiprocessing.Process(target=generateTests, args=(500,))
+    tests_1000 = multiprocessing.Process(target=generateTests, args=(1000,))
 
     tests_200.start()
     tests_500.start()
