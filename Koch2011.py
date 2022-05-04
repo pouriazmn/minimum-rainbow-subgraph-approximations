@@ -1,4 +1,4 @@
-import Graph as G
+import Graph
 
 def computeValues(inputGraph, coloursNeeded):
     n = inputGraph.n()
@@ -19,7 +19,7 @@ def computeValues(inputGraph, coloursNeeded):
 
 def Koch2011(inputGraph):
     n = inputGraph.n()
-    H = G.Graph(inputGraph.maxColour)
+    H = Graph.Graph(inputGraph.maxColour)
     coloursNeeded = []
 
     for edge in inputGraph.edges:
@@ -44,11 +44,13 @@ def Koch2011(inputGraph):
 
         for edge in newEdges:
             assert(newVertex == edge.v1 or newVertex == edge.v2)
-            if not edge.v1 in H.vertices:
-                H.addVertex(edge.v1)
-            if not edge.v2 in H.vertices:
-                H.addVertex(edge.v2)
-            H.addEdge(edge.v1, edge.v2, edge.colour)
+            i1 = edge.v1.index
+            i2 = edge.v2.index
+            if not i1 in H.vertices.keys():
+                H.newVertex(i1)
+            if not i2 in H.vertices.keys():
+                H.newVertex(i2)
+            H.addEdge(H.vertices[i1], H.vertices[i2], edge.colour)
             
             if edge.colour in coloursNeeded:
                 coloursNeeded.remove(edge.colour) #we no longer need this colour

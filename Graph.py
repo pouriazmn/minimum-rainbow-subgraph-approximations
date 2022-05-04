@@ -222,15 +222,6 @@ class Graph:
         self.degrees[0].append(v)
         return v
 
-    # add an existing vertex to the graph
-    def addVertex(self, v):
-        if not v.index:
-            v.index = self.vertex_index
-        if v.index in self.vertices.keys():
-            raise ValueError(f"Vertex {v} already exists in the graph")
-        self.vertices[v.index] = v
-        self.degrees[v.degree()]
-
     # connect vertices u and v with an edge of a specified colour
     def addEdge(self, u: Vertex, v: Vertex, colour):
         assert self.vertices[v.index] is v and self.vertices[u.index] is u

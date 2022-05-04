@@ -255,10 +255,11 @@ def produceAnalysis(fileNames):
 
 
 if __name__ == "__main__":
-    tests_200 = multiprocessing.Process(target=generateTests, args=(200,))
-    tests_500 = multiprocessing.Process(target=generateTests, args=(500,))
-    tests_1000 = multiprocessing.Process(target=generateTests, args=(1000,))
+    tests_koch = multiprocessing.Process(target=runTests, args=(Koch2011, "results-koch.csv", 10, 100))
+    tests_koch.start()
 
-    tests_200.start()
-    tests_500.start()
-    tests_1000.start()
+    tests_tirodkar = multiprocessing.Process(target=runTests, args=(Tirodkar2017, "results-tirodkar.csv",10,100))
+    tests_tirodkar.start()
+
+    tests_schiermeyer = multiprocessing.Process(target=runTests, args=(Schiermeyer2013, "results-schiermeyer.csv", 10, 100))
+    tests_schiermeyer.start()
