@@ -131,7 +131,7 @@ def generateStartingGraph(size, density, maxColour):
         toBeColoured.remove(edge)
         colourNum = (colourNum + 1) % maxColour
 
-    #print("start graph with size=" + str(size) + ", density = " + str(density) + ", and num colours = " + str(maxColour) + " generated.")
+    print("start graph with size=" + str(size) + ", density = " + str(density) + ", and num colours = " + str(maxColour) + " generated.")
     return newGraph
 
 def generateTest(size, density, maxColour):
@@ -143,7 +143,14 @@ def generateTest(size, density, maxColour):
 sizes = [10, 50, 100, 200, 500, 1000]
 def generateTests(size):
     #walk through all edge densities
-    for edgeDensity in range(10, 90, 10):
+    densityMin = 10
+
+    if size == 200:
+        thread = threading.Thread(target=generateTest, args=(200,50,11,))
+        thread.start()
+        densityMin = 60
+    
+    for edgeDensity in range(densityMin, 90, 10):
         
         #figure out what the colour parameters will be
         maxColours = int(m.sqrt(size))
@@ -248,16 +255,10 @@ def produceAnalysis(fileNames):
 
 
 if __name__ == "__main__":
-    tests_10 = multiprocessing.Process(target=generateTests, args=(10,))
-    tests_50 = multiprocessing.Process(target=generateTests, args=(50,))
-    tests_100 = multiprocessing.Process(target=generateTests, args=(100,))
     tests_200 = multiprocessing.Process(target=generateTests, args=(200,))
     tests_500 = multiprocessing.Process(target=generateTests, args=(500,))
     tests_1000 = multiprocessing.Process(target=generateTests, args=(1000,))
 
-    tests_10.start()
-    tests_50.start()
-    tests_100.start()
     tests_200.start()
     tests_500.start()
     tests_1000.start()

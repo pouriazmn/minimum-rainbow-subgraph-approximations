@@ -219,6 +219,7 @@ class Graph:
             raise ValueError(f"Index {index} already exists in the graph")
         v = Vertex(index)
         self.vertices[v.index] = v
+        self.degrees[0].append(v)
         return v
 
     # add an existing vertex to the graph
@@ -228,37 +229,39 @@ class Graph:
         if v.index in self.vertices.keys():
             raise ValueError(f"Vertex {v} already exists in the graph")
         self.vertices[v.index] = v
+        self.degrees[v.degree()]
 
     # connect vertices u and v with an edge of a specified colour
     def addEdge(self, u: Vertex, v: Vertex, colour):
         assert self.vertices[v.index] is v and self.vertices[u.index] is u
         if(u is not v):
+            self.degrees[v.degree()].remove(v)
+            self.degrees[u.degree()].remove(u)
             newEdge = Edge(u, v, colour)
             self.edges.append(newEdge)
             u.addEdge(newEdge)
             v.addEdge(newEdge)
             self.colours[colour].add(newEdge)
+            self.degrees[v.degree()].append(v)
+            self.degrees[u.degree()].append(u)
 
     def removeEdge(self, edge: Edge):
         assert edge is not None
+        self.degrees[edge.v1.degree()].remove(edge.v1)
+        self.degrees[edge.v2.degree()].remove(edge.v2)
         self.edges.remove(edge)
         edge.v1.removeEdge(edge)
         edge.v2.removeEdge(edge)
         self.colours[edge.colour].remove(edge)
         if len(self.colours[edge.colour]) == 0:
             del self.colours[edge.colour]
+        self.degrees[edge.v1.degree()].append(edge.v1)
+        self.degrees[edge.v2.degree()].append(edge.v2)
 
     # check if vertices u and v are connected by at least one edge
     def adjacent(self, u: Vertex, v: Vertex):
         assert self.vertices[v.index] is v and self.vertices[u.index] is u
         return u in v.neighbours
-
-    def computeDegreeDict(self):
-        self.degrees = defaultdict(list)
-        n = self.n()
-        for i in range(n):
-            v = self.vertices[i]
-            self.degrees[v.degree()].append(v)
 
     def toNX(self):
         nx_graph = nx.MultiGraph()
@@ -365,6 +368,5 @@ def randomGraph(G):
     newGraph = G.copy()
 
     for _ in range(k):
-        newGraph.computeDegreeDict()
         rewire(newGraph)
     return newGraph
