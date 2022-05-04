@@ -1,39 +1,81 @@
 import random
 from collections import defaultdict
-from typing import List, Dict
+from typing import List, Dict, Iterable
 
 import networkx as nx
 from matplotlib import pyplot as plt
+
 
 class Vertex:
     # create a vertex
     def __init__(self, index):
         self.index = index
         self.incidentEdges = set()
-        self.neighbours = list()
+        self._neighbours = defaultdict(set)
+        self._colours = defaultdict(set)
 
+    @property
+    def neighbours(self):
+        return set(self._neighbours.keys())
     # check how many edges this vertex is incident to
     def degree(self):
         return len(self.incidentEdges)
+
+    @property
+    def colours(self):
+        return self._colours
+
+    @property
+    def colour_degree(self):
+        return len(self._colours)
+
+    def colour_degree_into_sub_graph(self, vertices):
+        return len(self.colours_into_sub_graph(vertices))
+
+    def colours_into_sub_graph(self, vertices):
+        colours = set()
+        for vertex in vertices:
+            for edge in self._neighbours.get(vertex, []):
+                colours.add(edge.colour)
+        return colours
+
+    def edges_into_sub_graph(self, vertices):
+        edges = list()
+        for vertex in vertices:
+            for edge in self._neighbours.get(vertex, []):
+                edges.append(edge)
+        return edges
+
 
     # add a new edge we are incident to
     def addEdge(self, newEdge):
         assert (newEdge.v1 is self or newEdge.v2 is self)
         self.incidentEdges.add(newEdge)
+        self._colours[newEdge.colour].add(newEdge)
         if newEdge.v1 is self:
-            self.neighbours.append(newEdge.v2)
+            self._neighbours[newEdge.v2].add(newEdge)
         else:
-            self.neighbours.append(newEdge.v1)
+            self._neighbours[newEdge.v1].add(newEdge)
 
     def removeEdge(self, edge):
         assert (edge.v1 is self or edge.v2 is self)
         self.incidentEdges.remove(edge)
+        self._colours[edge.colour].remove(edge)
+        if len(self._colours[edge.colour]) == 0:
+            del self._colours[edge.colour]
         if edge.v1 is self:
-            self.neighbours.remove(edge.v2)
+            self._neighbours[edge.v2].remove(edge)
+            if len(self._neighbours[edge.v2]) == 0:
+                del self._neighbours[edge.v2]
         else:
-            self.neighbours.remove(edge.v1)
+            self._neighbours[edge.v1].remove(edge)
+            if len(self._neighbours[edge.v1]) == 0:
+                del self._neighbours[edge.v1]
 
     def __str__(self):
+        return f"<{self.index}>"
+
+    def __repr__(self):
         return f"<{self.index}>"
 
 
@@ -65,7 +107,8 @@ class Edge:
 class Graph:
 
     # create an empty graph
-    def __init__(self, maxColour=None):
+    def __init__(self, maxColour=None, name=None):
+        self.name = name
         self._vertex_index = 0
         self.vertices: Dict[int][Vertex] = dict()
         self.edges: List[Edge] = []
@@ -76,6 +119,83 @@ class Graph:
     @property
     def num_colours(self):
         return len(self.colours.keys())
+
+    def max_colour_degree(self):
+        vertex = max(self.vertices.values(), key=lambda v: v.colour_degree)
+        return vertex
+
+    def max_colour_degree_into_subgraph(self, sub_vertices: List[Vertex], from_vertices: List[Vertex] = None):
+        if from_vertices:
+            vertex = max(from_vertices, key=lambda v: v.colour_degree_into_sub_graph(sub_vertices))
+        else:
+            vertex = max(self.vertices.values(), key=lambda v: v.colour_degree_into_sub_graph(sub_vertices))
+        return vertex
+
+    def keep_only_one_edge_of_each_colour(self, vertex: Vertex):
+        remove_edges = set()
+        keep_edges = set()
+        for colour in vertex.colours.keys():
+            keep = vertex.colours[colour].pop()
+            keep_edges.add(keep)
+            remove_edges = remove_edges.union(vertex.colours[colour])
+            vertex.colours[colour].add(keep)
+
+        for edge in keep_edges:
+            if edge.v1 == vertex:
+                neigh = edge.v2
+            else:
+                neigh = edge.v1
+            for rem_edge in neigh.colours[edge.colour]:
+                if rem_edge != edge:
+                    remove_edges.add(rem_edge)
+
+        for edge in remove_edges:
+            self.removeEdge(edge)
+
+    def remove_all_colours_incident_to_vertex(self, vertex: Vertex):
+        edges = set(vertex.incidentEdges)
+        for colour in vertex.colours.keys():
+            edges = edges.union(self.colours[colour])
+
+        for edge in edges:
+            self.removeEdge(edge)
+
+    def distinct_colours_of_subgraph(self, sub_vertices: Iterable[Vertex]):
+        colours = set()
+        for vertex in sub_vertices:
+            colours = colours.union(vertex.colours_into_sub_graph(sub_vertices))
+        return colours
+
+    def vertices_by_index(self, indices: Iterable[int]):
+        vertices = []
+        for index in indices:
+            vertices.append(self.vertices[index])
+        return vertices
+
+    def remove_all_colours_in_sub_graph(self, sub_vertices: Iterable[Vertex]):
+        colours = self.distinct_colours_of_subgraph(sub_vertices)
+        remove_edges = []
+        for c in colours:
+            remove_edges.extend(self.colours[c])
+
+        for edge in remove_edges:
+            self.removeEdge(edge)
+
+    def induced_sub_graph(self, sub_vertices):
+        sub_graph = self.__class__(name=f"{self.name}-sub")
+        edges = set()
+        for vertex in sub_vertices:
+            sub_graph.newVertex(vertex.index)
+            for edge in vertex.edges_into_sub_graph(sub_vertices):
+                edges.add((edge.v1.index, edge.v2.index, edge.colour))
+
+        for e in edges:
+            v1 = sub_graph.vertices[e[0]]
+            v2 = sub_graph.vertices[e[1]]
+            c = e[2]
+            sub_graph.addEdge(v1, v2, c)
+
+        return sub_graph
 
     # get the number of vertices in the graph
     def n(self):
@@ -125,6 +245,8 @@ class Graph:
         edge.v1.removeEdge(edge)
         edge.v2.removeEdge(edge)
         self.colours[edge.colour].remove(edge)
+        if len(self.colours[edge.colour]) == 0:
+            del self.colours[edge.colour]
 
     # check if vertices u and v are connected by at least one edge
     def adjacent(self, u: Vertex, v: Vertex):

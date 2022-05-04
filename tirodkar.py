@@ -3,307 +3,203 @@ import math
 
 import Graph
 
-graph = [
-    [0, 0, 0, 4, 0, 3, 0],
-    [0, 0, 4, 5, 2, 4, 2],
-    [0, 4, 0, 2, 0, 1, 3],
-    [4, 5, 2, 0, 3, 2, 1],
-    [0, 2, 0, 3, 0, 0, 0],
-    [3, 4, 1, 2, 0, 0, 0],
-    [0, 2, 3, 1, 0, 0, 0]
-]
 
-
-def print_graph(G):
-    for i in range(len(G)):
-        print(", ".join(map(str, G[i])))
-
-
-def print_sub_graph(G, sub):
-    for i in sub:
-        for j in sub:
-            print(G[i][j], end=", ")
-        print("")
-
-
-def sub_graph(G, sub):
-    subgraph = []
-    for i in sub:
-        adjacency = []
-        for j in sub:
-            adjacency.append(G[i][j])
-        subgraph.append(adjacency)
-    return subgraph
-
-
-
-
-def distinct_colors_of_sub_graph(G, sub):
-    colors = set()
-    for i in sub:
-        for j in sub:
-            if G[i][j] != 0:
-                colors.add(G[i][j])
-    return len(colors)
-
-
-def max_color_degree(G, exclude):
-    max_, max_i = 0, -1
-    for vertex, neighbors_vector in enumerate(G):
-        if vertex in exclude:
-            continue
-        colors = set(filter(lambda x: x != 0, neighbors_vector))
-        if len(colors) > max_:
-            max_ = len(colors)
-            max_i = vertex
-    return max_i
-
-
-def max_color_degree_into_subgraph(G, T, exclude, from_vertices=None):
-    max_, max_i = 0, -1
-    for vertex, neighbors_vector in enumerate(G):
-        if from_vertices and vertex not in from_vertices:
-            continue
-
-        if vertex in T or vertex in exclude:
-            continue
-        colors = set(filter(lambda x: x[0] in T and x[1] != 0, enumerate(neighbors_vector)))
-        if len(colors) > max_:
-            max_ = len(colors)
-            max_i = vertex
-
-    return max_i
-
-
-def remove_edges(G, vertex):
-    colors = set()
-    for i in range(len(G)):
-        colors.add(G[vertex][i])
-        G[vertex][i] = 0
-        G[i][vertex] = 0
-    for c in colors:
-        for i in range(len(G)):
-            for j in range(len(G)):
-                if G[i][j] == c:
-                    G[i][j] = 0
-                    G[j][i] = 0
-    return G
-
-
-def procedure_1(G, k):
+def procedure_1(graph: Graph.Graph, k):
     half = int(k/2)
-    edge_cols = set()
     edges = []
-    vertices = set()
-    i = 0
-    flag = True
-    n = len(G)
-    while flag and i < n:
-        j = 0
-        while flag and j < i:
-            if G[i][j] != 0 and G[i][j] not in edge_cols:
-                edge_cols.add(G[i][j])
-                edges.append((i, j))
-                vertices.add(i)
-                vertices.add(j)
-            if len(edges) >= half:
-                flag = False
-            j += 1
-        i += 1
+    for colour in graph.colours.keys():
+        if len(graph.colours[colour]) == 0:
+            print(f"graph `{graph.name}` does not have any edge with colour `{colour}`, although it should")
+            continue
+        edge = graph.colours[colour].pop()
+        graph.colours[colour].add(edge)
+        edges.append(edge)
 
-    i = 0
-    while len(vertices) < k:
-        vertices.add(i)
-        i += 1
+    edges = edges[:min(half, len(edges))]
+
+    vertices = set()
+    for edge in edges:
+        vertices.add(edge.v1.index)
+        vertices.add(edge.v2.index)
+
+    for v_ind in graph.vertices.keys():
+        if len(vertices) < k:
+            vertices.add(v_ind)
+
     return vertices
 
 
-def procedure_2(G, k):
-    G = copy.deepcopy(G)
-    G_prime = copy.deepcopy(G)
+def procedure_2(graph: Graph.Graph, k):
+
+    graph = graph.copy()
+    g_prime = graph.copy()
     T = set()
     T_2 = set()
+
     for _ in range(int(math.ceil(k/2))):
-        max_v = max_color_degree(G_prime, T)
-        if max_v == -1:
-            break
-        T.add(max_v)
-        G_prime = remove_edges(G_prime, max_v)
+        max_v = g_prime.max_colour_degree()
+        T.add(max_v.index)
+        g_prime.remove_all_colours_incident_to_vertex(max_v)
+
+    t_sub_graph_vertices = graph.vertices_by_index(T)
 
     for _ in range(int(k/2)):
-        max_v = max_color_degree_into_subgraph(G, T, T_2)
-        if max_v == -1:
-            break
 
-        T_2.add(max_v)
-        G = remove_edges(G, max_v)
+        max_v = graph.max_colour_degree_into_subgraph(t_sub_graph_vertices)
+        T_2.add(max_v.index)
+        graph.remove_all_colours_incident_to_vertex(max_v)
 
     vertices = T.union(T_2)
 
-    i = 0
-    while len(vertices) < k:
-        vertices.add(i)
-        i += 1
+    for v_ind in graph.vertices.keys():
+        if len(vertices) < k:
+            vertices.add(v_ind)
+
     return vertices
 
 
-def N_2_v(G, v):
+def procedure_3_sub(graph: Graph.Graph, k, vertex_ind):
+    graph = graph.copy()
+    g_prime = graph.copy()
+    N_1 = graph.vertices[vertex_ind].neighbours
     N_2 = set()
-    neighbors_v = list(filter(lambda x: G[v][x] != 0, range(len(G[v]))))
-    for n in neighbors_v:
-        for vertex in range(len(G[n])):
-            if vertex != v and G[n][vertex] != 0 and vertex not in neighbors_v:
-                N_2.add(vertex)
-    return N_2
+    for vertex in N_1:
+        N2 = N_2.union(vertex.neighbours)
 
+    N_2.difference_update(N_1)
 
-def procedure_3_sub(G, k, v):
-    G = copy.deepcopy(G)
-    G_prime = copy.deepcopy(G)
-    N_1 = list(filter(lambda x: G[v][x] != 0, range(len(G[v])))) + [v]
-    N_2 = N_2_v(G, v)
     P = set()
     Q = set()
     for _ in range(int(math.ceil(k/2))):
-        max_v = max_color_degree_into_subgraph(G, N_1, P, N_2)
-        if max_v == -1:
-            break
-        P.add(max_v)
-        G = remove_edges(G, max_v)
+        max_v = graph.max_colour_degree_into_subgraph(sub_vertices=N_1, from_vertices=N_2)
+        P.add(max_v.index)
+        graph.remove_all_colours_incident_to_vertex(max_v)
+
+    p_sub_graph_vertices = g_prime.vertices_by_index(P)
+    N_1_g_prime = g_prime.vertices_by_index([v.index for v in N_1])
 
     for _ in range(int(k/2)):
-        max_v = max_color_degree_into_subgraph(G_prime, P, Q, N_1)
-        if max_v == -1:
-            break
-        Q.add(max_v)
-        G_prime = remove_edges(G_prime, max_v)
+        max_v = g_prime.max_colour_degree_into_subgraph(sub_vertices=p_sub_graph_vertices, from_vertices=N_1_g_prime)
+        Q.add(max_v.index)
+        g_prime.remove_all_colours_incident_to_vertex(max_v)
 
     vertices = P.union(Q)
 
-    i = 0
-    while len(vertices) < k:
-        vertices.add(i)
-        i += 1
+    for v_ind in graph.vertices.keys():
+        if len(vertices) < k:
+            vertices.add(v_ind)
+
     return vertices
 
 
-def procedure_3(G, k):
-    max_set = set()
-    max_set_num = 0
-    for v in range(len(G)):
-        sub = procedure_3_sub(G, k, v)
-        set_num = distinct_colors_of_sub_graph(G, sub)
-        if set_num > max_set_num:
-            max_set_num = set_num
-            max_set = sub
+def procedure_3(graph, k, U=None):
+    if U is None:
+        U = graph.vertices.keys()
+    max_sub_graph = set()
+    max_colour_num = 0
+    for v_ind in U:
+        sub = procedure_3_sub(graph, k, v_ind)
+        sub_graph_vertices = graph.vertices_by_index(sub)
 
-    return max_set
+        colours_set = graph.distinct_colours_of_subgraph(sub_graph_vertices)
+        if len(colours_set) > max_colour_num:
+            max_sub_graph = sub
+            max_colour_num = len(colours_set)
+
+    return max_sub_graph
 
 
-def procedure_4(G, k):
-    G = copy.deepcopy(G)
+def procedure_4(graph, k):
+    original = graph
+    graph = graph.copy()
+    g_prime = graph.copy()
     U = set()
+    U_vertices = set()
+    V_prime = set()
     V = set()
     for _ in range(int(math.ceil(k/2))):
-        max_ver = max_color_degree(G, U)
-        if max_ver == -1:
-            break
-        U.add(max_ver)
-        # we consider valid colorings so there is no need for removing edges of the same color
+        max_v = graph.max_colour_degree()
+        graph.keep_only_one_edge_of_each_colour(max_v)
+        U.add(max_v.index)
+        U_vertices.add(max_v)
+
+    for _ in range(int(k / 2)):
+        max_v = graph.max_colour_degree_into_subgraph(U_vertices)
+        V.add(max_v.index)
+        graph.remove_all_colours_incident_to_vertex(max_v)
+
+    u_sub_graph_vertices = g_prime.vertices_by_index(U)
 
     for _ in range(int(k/2)):
-        max_v = max_color_degree_into_subgraph(G, U, V)
-        if max_v == -1:
-            break
-
-        V.add(max_v)
-        G = remove_edges(G, max_v)
+        max_v = g_prime.max_colour_degree_into_subgraph(u_sub_graph_vertices)
+        V_prime.add(max_v.index)
+        g_prime.remove_all_colours_incident_to_vertex(max_v)
 
     vertices = U.union(V)
+    for v_ind in original.vertices.keys():
+        if len(vertices) < k:
+            vertices.add(v_ind)
 
-    i = 0
-    while len(vertices) < k:
-        vertices.add(i)
-        i += 1
+    vertices_prime = U.union(V_prime)
+    for v_ind in original.vertices.keys():
+        if len(vertices_prime) < k:
+            vertices_prime.add(v_ind)
+
+    sub_graph_vertices = original.vertices_by_index(vertices)
+    sub_graph_vertices_prime = original.vertices_by_index(vertices_prime)
+
+    colours_set = original.distinct_colours_of_subgraph(sub_graph_vertices)
+    colours_set_prime = original.distinct_colours_of_subgraph(sub_graph_vertices_prime)
+    if len(colours_set) > len(colours_set_prime):
+        return vertices, U
+    else:
+        return vertices_prime, U
+
+
+def tirodkar_procedure(graph, k):
+    a1_ver = procedure_1(graph, k)
+    a2_ver = procedure_2(graph, k)
+    a4_ver, U = procedure_4(graph, k)
+    a3_ver = procedure_3(graph, k, U)
+
+    vertices = max(a1_ver, a2_ver, a3_ver, a4_ver,
+                   key=lambda x: graph.distinct_colours_of_subgraph(graph.vertices_by_index(x)))
     return vertices
 
 
-def low_degrees_procedure_3(G, k):
-    G = copy.deepcopy(G)
-    U = set()
-    for _ in range(int(math.ceil(k/2))):
-        max_ver = max_color_degree(G, U)
-        if max_ver == -1:
-            break
-        U.add(max_ver)
-
-    for vertex in U:
-        for i in range(len(G)):
-            G[vertex][i] = 0
-            G[i][vertex] = 0
-
-    return procedure_3(G, k)
-
-
-def tirodkar_procedure(G, k):
-    a1_ver = procedure_1(G, k)
-    a2_ver = procedure_2(G, k)
-    a3_ver = low_degrees_procedure_3(G, k)
-    a4_ver = procedure_4(G, k)
-
-    vertices = max(a1_ver, a2_ver, a3_ver, a4_ver, key=lambda x: distinct_colors_of_sub_graph(G, x))
-    return vertices
-
-
-def remove_all_colors_present_in_subgraph(G, sub):
-    colors = set()
-    for i in sub:
-        for j in sub:
-            if G[i][j] != 0:
-                colors.add(G[i][j])
-    for i in range(len(G)):
-        for j in range(len(G)):
-            if G[i][j] in colors:
-                G[i][j] = 0
-    return G
-
-
-def tirodkar_mrs_procedure(G):
+def Tirodkar2017(graph: Graph.Graph):
     print("----------------------------------")
-    p = distinct_colors_of_sub_graph(G, range(len(G)))
-    min_n_ver, max_n_ver = int(math.sqrt(p)), min(p * 2 + 1, len(G))
-    print(f"{p} colors, min_k = {min_n_ver}, max_k = {max_n_ver}, size: {len(G)}")
-    print_graph(G)
-
+    p = graph.num_colours
+    min_n_ver, max_n_ver = int(math.sqrt(p)), min(p * 2 + 1, graph.n())
+    print(f"{p} colors, min_k = {min_n_ver}, max_k = {max_n_ver}, size: {graph.n()}")
     result_ver = None
-    result_n_ver = len(G)
+    result_size = graph.n()
     for k in range(min_n_ver, max_n_ver):
-        G_prime = copy.deepcopy(G)
-        vertices = tirodkar_procedure(G_prime, k)
-        while distinct_colors_of_sub_graph(G, vertices) < p:
-            G_prime = remove_all_colors_present_in_subgraph(G_prime, vertices)
-            new_it = tirodkar_procedure(G_prime, k)
-            vertices = vertices.union(new_it)
+        if k > result_size:
+            break
+        g_prime = graph.copy()
+        sub_graph = tirodkar_procedure(g_prime, k)
+        c = 1
+        while len(graph.distinct_colours_of_subgraph(graph.vertices_by_index(sub_graph))) < p:
+            # print(f"iteration -> {c}")
+            # print(f"g_prime colours: {g_prime.colours.keys()}")
+            # print(f"graph colours: {graph.colours.keys()}")
+            # print(f"distict colors of sub graph in g_prime: {g_prime.distinct_colours_of_subgraph(g_prime.vertices_by_index(sub_graph))}")
+            # print(f"distict colors of sub graph in graph: {graph.distinct_colours_of_subgraph(graph.vertices_by_index(sub_graph))}")
+            # print(f"the subgraph: {sub_graph}")
+            c += 1
+            sub_graph_vertices = g_prime.vertices_by_index(sub_graph)
+            g_prime.remove_all_colours_in_sub_graph(sub_graph_vertices)
+            new_it = tirodkar_procedure(g_prime, k)
+            sub_graph = sub_graph.union(new_it)
 
-        if len(vertices) < result_n_ver:
-            result_n_ver = len(vertices)
-            result_ver = vertices
+        if len(sub_graph) < result_size:
+            result_size = len(sub_graph)
+            result_ver = sub_graph
 
-    print(f"result k = {result_n_ver}, {result_ver}")
-    print_sub_graph(G, result_ver)
+    print(f"result k = {result_size}, {result_ver}")
+    sub_graph = graph.induced_sub_graph(graph.vertices_by_index(result_ver))
+    print(list(sub_graph.vertices.values()), sub_graph.edges, sep="\n")
 
-    return result_ver
+    return sub_graph
 
-
-def Tirodkar2017(G: Graph.Graph):
-    graph = G.to_adjacency_matrix()
-    result = tirodkar_mrs_procedure(graph)
-    subgraph = sub_graph(graph, result)
-    color_size = distinct_colors_of_sub_graph(graph, result)
-    return Graph.Graph.from_adjacency_matrix(subgraph, color_size)
-
-
-if __name__ == '__main__':
-    ver = tirodkar_mrs_procedure(graph)
-    print(ver)
-    print_graph(sub_graph(graph, ver))
