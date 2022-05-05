@@ -197,6 +197,15 @@ class Graph:
 
         return sub_graph
 
+    def find_adjacent_vertices_with_colours(self, c1, c2):
+        for e1 in self.colours[c1]:
+            for e2 in self.colours[c2]:
+                # if these edges have a vertex in common, make a set the size will be 3
+                vertices = {e1.v1, e1.v2, e2.v1, e2.v2}
+                if len(vertices) == 3:
+                    return vertices
+        return None
+
     # get the number of vertices in the graph
     def n(self):
         return len(self.vertices)
