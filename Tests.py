@@ -9,37 +9,21 @@ from Koch2011 import Koch2011
 from tirodkar import Tirodkar2017
 from schiermeyer2013 import Schiermeyer2013
 
-
-def generateTestData(startGraph, numGraphs):
-    graphs = []
-    # start with the initial graph
-    graphs.append(startGraph)
-
-    # generate a sequence of random graphs
-    for i in range(numGraphs):
-        graphs.append(G.randomGraph(graphs[i]))
-    return graphs
-
-def writeTestData(testData, fileName):
-    graphs = testData[0]
-    size = testData[1]
-    density = testData[2]
-    maxColour = testData[3]
-
-    testDataString = str(size) + "," + str(density) + "," + str(maxColour) + "#\n"
-    # create a string for each test graph
-    for graph in graphs:
-
-        # write each edge
-        for edge in graph.edges:
-            testDataString += str(edge.v1.index) + "," + str(edge.v2.index) + "," + str(edge.colour) + "\n"
-        testDataString += "#" # between the graphs
-    
-    #write to the file
-    file = open(fileName, "w")
-    file.write(testDataString)
+def writeGraphToFile(graph : G.Graph, fileName):
+    # write each edge
+    file = open(fileName, "a")
+    for edge in graph.edges:
+        file.write(str(edge.v1.index) + "," + str(edge.v2.index) + "," + str(edge.colour) + "\n")
+    file.write("#") # between the graphs
     file.close()
 
+def generateTestData(startGraph, numGraphs, fileName):
+    graph = startGraph
+
+    # generate a sequence of random graphs
+    for _ in range(numGraphs):
+        graph = G.randomGraph(graph)
+        writeGraphToFile(graph, fileName)
 
 def readTestData(fileName):
     # open the file containing the test data
@@ -135,10 +119,17 @@ def generateStartingGraph(size, density, maxColour):
     return newGraph
 
 def generateTest(size, density, maxColour):
+    #write test info to file
+    fileName = "Tests/TEST_" + str(size) + "_" + str(density) + "_" + str(maxColour) + ".txt"
+    file = open(fileName, "a")
+    file.write(str(size) + "," + str(density) + "," + str(maxColour) + "#\n")
+    file.close()
+
     startGraph = generateStartingGraph(size, density, maxColour)
-    graphs = generateTestData(startGraph, 10)
+    writeGraphToFile(startGraph, fileName)
+
+    generateTestData(startGraph, 10, fileName)
     print("Test data with size = " + str(size) + ", density = " + str(density) + ", num colours = " + str(maxColour) + " generated")
-    writeTestData([graphs, size, density, maxColour], "Tests/TEST_" + str(size) + "_" + str(density) + "_" + str(maxColour) + ".txt")
 
 sizes = [10, 50, 100, 200, 500, 1000]
 def generateTests(size):
@@ -146,8 +137,6 @@ def generateTests(size):
     densityMin = 10
 
     if size == 200:
-        thread = threading.Thread(target=generateTest, args=(200,50,11,))
-        thread.start()
         densityMin = 60
     
     for edgeDensity in range(densityMin, 90, 10):
@@ -255,11 +244,31 @@ def produceAnalysis(fileNames):
 
 
 if __name__ == "__main__":
-    tests_koch = multiprocessing.Process(target=runTests, args=(Koch2011, "results-koch.csv", 10, 100))
-    tests_koch.start()
+    tests_200 = multiprocessing.Process(target=generateTests, args=(200,))
+    tests_500 = multiprocessing.Process(target=generateTests, args=(500,))
+    tests_1000 = multiprocessing.Process(target=generateTests, args=(1000,))
 
-    tests_tirodkar = multiprocessing.Process(target=runTests, args=(Tirodkar2017, "results-tirodkar.csv",10,100))
+    tests_200.start()
+    tests_500.start()
+    tests_1000.start()
+
+    tests_200.join()
+    tests_500.join()
+
+    tests_koch = multiprocessing.Process(target=runTests, args=(Koch2011, "results-koch.csv", 200, 500,))
+    tests_schiermeyer = multiprocessing.Process(target=runTests, args=(Schiermeyer2013, "results-schiermeyer.csv", 200, 500,))
+    tests_tirodkar = multiprocessing.Process(target=runTests, args=(Tirodkar2017, "results-Tirodkar.csv", 200, 500,))
+
+    tests_koch.start()
+    tests_schiermeyer.start()
     tests_tirodkar.start()
 
-    tests_schiermeyer = multiprocessing.Process(target=runTests, args=(Schiermeyer2013, "results-schiermeyer.csv", 10, 100))
+    tests_1000.join()
+
+    tests_koch = multiprocessing.Process(target=runTests, args=(Koch2011, "results-koch.csv", 1000,))
+    tests_schiermeyer = multiprocessing.Process(target=runTests, args=(Schiermeyer2013, "results-schiermeyer.csv", 1000,))
+    tests_tirodkar = multiprocessing.Process(target=runTests, args=(Tirodkar2017, "results-Tirodkar.csv", 1000,))
+
+    tests_koch.start()
     tests_schiermeyer.start()
+    tests_tirodkar.start()
