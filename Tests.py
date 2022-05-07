@@ -8,6 +8,7 @@ from statistics import mean
 from Koch2011 import Koch2011
 from tirodkar import Tirodkar2017
 from schiermeyer2013 import Schiermeyer2013
+import sys
 
 def writeGraphToFile(graph : G.Graph, fileName):
     # write each edge
@@ -119,6 +120,9 @@ def generateStartingGraph(size, density, maxColour):
 
 def generateTest(size, density, maxColour):
     #write test info to file
+    if not os.path.exists("EXAMPLE_Tests"):
+        os.mkdir("EXAMPLE_Tests")
+
     fileName = "EXAMPLE_Tests/TEST_" + str(size) + "_" + str(density) + "_" + str(maxColour) + ".txt"
 
     if not os.path.isfile(fileName):
@@ -249,9 +253,20 @@ def produceAnalysis(fileNames):
             analysisFile.close()
 
 if __name__ == "__main__":
-    tests = multiprocessing.Process(target= generateTests, args=(10,))
-    tests.start()
-    tests.join()
+    if len(sys.argv) == 1:
+        tests = multiprocessing.Process(target= generateTests, args=(10,))
+        tests.start()
+        tests.join()
+    else:
+        processes = []
+        for i in range(1, len(sys.argv)):
+            num = int(sys.argv[i])
+            process = multiprocessing.Process(target=generateTests, args=(num,))
+            processes.append(process)
+            process.start()
+
+        for process in processes:
+            process.join()
 
     runTests(Koch2011, "EXAMPLE-results-koch.csv")
     runTests(Schiermeyer2013, "EXAMPLE-results-schiermeyer.csv")
