@@ -87,7 +87,6 @@ def runTest(testData, mrsFunction, draw=False):
 def runTestFromFile(testFile, mrsFunction, draw=False):
     return runTest(readTestData(testFile), mrsFunction, draw=draw)
 
-
 def generateStartingGraph(size, density, maxColour):
     edgeDensityFraction = density / 100
 
@@ -120,15 +119,22 @@ def generateStartingGraph(size, density, maxColour):
 
 def generateTest(size, density, maxColour):
     #write test info to file
-    fileName = "Tests/TEST_" + str(size) + "_" + str(density) + "_" + str(maxColour) + ".txt"
-    file = open(fileName, "a")
-    file.write(str(size) + "," + str(density) + "," + str(maxColour) + "#\n")
-    file.close()
+    fileName = "EXAMPLE_Tests/TEST_" + str(size) + "_" + str(density) + "_" + str(maxColour) + ".txt"
 
-    startGraph = generateStartingGraph(size, density, maxColour)
-    writeGraphToFile(startGraph, fileName)
+    if not os.path.isfile(fileName):
+        file = open(fileName, "a")
+        file.write(str(size) + "," + str(density) + "," + str(maxColour) + "#\n")
+        file.close()
 
-    generateTestData(startGraph, 10, fileName)
+        startGraph = generateStartingGraph(size, density, maxColour)
+        writeGraphToFile(startGraph, fileName)
+        graphsToGenerate = 10
+    else:
+        graphs = readTestData(fileName)[0]
+        graphsToGenerate = 11 - len(graphs)
+        startGraph = graphs[len(graphs)-1]
+
+    generateTestData(startGraph, graphsToGenerate, fileName)
     print("Test data with size = " + str(size) + ", density = " + str(density) + ", num colours = " + str(maxColour) + " generated")
 
 sizes = [10, 50, 100, 200, 500, 1000]
@@ -170,7 +176,7 @@ def runTests(mrsFunction, outputFile, sizeMin=10, sizeMax=1000):
 
                 #walk through the numbers of colours
                 for numColours in range(5, maxColours + colourStep, colourStep):
-                    fileName = "./Tests/TEST_" + str(size) + "_" + str(edgeDensity) + "_" + str(numColours) + ".txt"
+                    fileName = "./EXAMPLE_Tests/TEST_" + str(size) + "_" + str(edgeDensity) + "_" + str(numColours) + ".txt"
                     if os.path.isfile(fileName):
                         results = runTestFromFile(fileName, mrsFunction)
                         resultString = mrsFunction.__name__
@@ -221,7 +227,7 @@ def produceAnalysis(fileNames):
         #write the results for analysis by size
         for size in resultsBySize.keys():
             avgBySize = mean(resultsBySize[size])
-            analysisFile = open("results-analysis-size.csv", "a")
+            analysisFile = open("EXAMPLE_results-analysis-size.csv", "a")
             analysisFile.write(name + "," + str(size) + "," + str(avgBySize))
             analysisFile.write("\n")
             analysisFile.close()
@@ -229,7 +235,7 @@ def produceAnalysis(fileNames):
         #write the results for analysis by density
         for density in resultsByDensity.keys():
             avgByDensity = mean(resultsByDensity[density])
-            analysisFile = open("results-analysis-density.csv", "a")
+            analysisFile = open("EXAMPLE_results-analysis-density.csv", "a")
             analysisFile.write(name + "," + str(density) + "," + str(avgByDensity))
             analysisFile.write("\n")
             analysisFile.close()
@@ -237,38 +243,18 @@ def produceAnalysis(fileNames):
         #write the results for analysis by number of colours
         for numColours in resultsByColours.keys():
             avgByColours = mean(resultsByColours[numColours])
-            analysisFile = open("results-analysis-colours.csv", "a")
+            analysisFile = open("EXAMPLE_results-analysis-colours.csv", "a")
             analysisFile.write(name + "," + str(numColours) + "," + str(avgByColours))
             analysisFile.write("\n")
             analysisFile.close()
 
-
 if __name__ == "__main__":
-    tests_200 = multiprocessing.Process(target=generateTests, args=(200,))
-    tests_500 = multiprocessing.Process(target=generateTests, args=(500,))
-    tests_1000 = multiprocessing.Process(target=generateTests, args=(1000,))
+    tests = multiprocessing.Process(target= generateTests, args=(10,))
+    tests.start()
+    tests.join()
 
-    tests_200.start()
-    tests_500.start()
-    tests_1000.start()
+    runTests(Koch2011, "EXAMPLE-results-koch.csv")
+    runTests(Schiermeyer2013, "EXAMPLE-results-schiermeyer.csv")
+    runTests(Tirodkar2017, "EXAMPLE-results-tirodkar.csv")
 
-    tests_200.join()
-    tests_500.join()
-
-    tests_koch = multiprocessing.Process(target=runTests, args=(Koch2011, "results-koch.csv", 200, 500,))
-    tests_schiermeyer = multiprocessing.Process(target=runTests, args=(Schiermeyer2013, "results-schiermeyer.csv", 200, 500,))
-    tests_tirodkar = multiprocessing.Process(target=runTests, args=(Tirodkar2017, "results-Tirodkar.csv", 200, 500,))
-
-    tests_koch.start()
-    tests_schiermeyer.start()
-    tests_tirodkar.start()
-
-    tests_1000.join()
-
-    tests_koch = multiprocessing.Process(target=runTests, args=(Koch2011, "results-koch.csv", 1000,))
-    tests_schiermeyer = multiprocessing.Process(target=runTests, args=(Schiermeyer2013, "results-schiermeyer.csv", 1000,))
-    tests_tirodkar = multiprocessing.Process(target=runTests, args=(Tirodkar2017, "results-Tirodkar.csv", 1000,))
-
-    tests_koch.start()
-    tests_schiermeyer.start()
-    tests_tirodkar.start()
+    produceAnalysis(["EXAMPLE-results-koch.csv", "EXAMPLE-results-schiermeyer.csv", "EXAMPLE-results-tirodkar.csv"])
