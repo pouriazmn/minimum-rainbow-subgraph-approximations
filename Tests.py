@@ -7,7 +7,7 @@ import threading
 from statistics import mean
 from Koch2011 import Koch2011
 from tirodkar import Tirodkar2017
-from schiermeyer2013 import Schiermeyer2013
+from camacho2010 import Camacho2010
 import sys
 
 def writeGraphToFile(graph : G.Graph, fileName):
@@ -269,7 +269,7 @@ if __name__ == "__main__":
             process.join()
 
     runTests(Koch2011, "EXAMPLE-results-koch.csv")
-    runTests(Schiermeyer2013, "EXAMPLE-results-schiermeyer.csv")
+    runTests(Camacho2010, "EXAMPLE-results-comacho.csv")
     runTests(Tirodkar2017, "EXAMPLE-results-tirodkar.csv")
 
-    produceAnalysis(["EXAMPLE-results-koch.csv", "EXAMPLE-results-schiermeyer.csv", "EXAMPLE-results-tirodkar.csv"])
+    produceAnalysis(["EXAMPLE-results-koch.csv", "EXAMPLE-results-comacho.csv", "EXAMPLE-results-tirodkar.csv"])

@@ -76,7 +76,7 @@ def match_colors_greedy(graph: Graph.Graph, colours):
     return graph_h_nodes
 
 
-def Schiermeyer2013(graph: Graph.Graph):
+def Camacho2010(graph: Graph.Graph):
     colors = graph.colours.keys()
     result = match_colors_greedy(graph, list(colors))
     subgraph = graph.induced_sub_graph(result)

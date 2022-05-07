@@ -1,5 +1,7 @@
+# The following algorithm is based on: https://github.com/yorkyer/edmonds-blossom/blob/master/max_matching.py
+# with small adjustments
+
 import logging
-# logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 class Node:
 
